@@ -3,13 +3,13 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
 
 type Props = {
-  navigation: NativeStackNavigationProp<RootStackParamList, "Settings">;
+  navigation: NativeStackNavigationProp<RootStackParamList, "ConnectAC">;
 };
 
-export default function SettingsScreen({ navigation }: Props) {
+export default function ConnectACScreen({ navigation }: Props) {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Settings</Text>
+      <Text style={styles.title}>Connect to AC</Text>
       <Text style={styles.subtitle}>Coming soon</Text>
       <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
         <Text style={styles.backLabel}>← Back</Text>
