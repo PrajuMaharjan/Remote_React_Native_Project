@@ -11,7 +11,7 @@ type HomeScreenProps={
 
 export default function HomeScreen({navigation}:HomeScreenProps){
     return(
-        <ImageBackground source={require("../../assets/images/HomeBackground.png")} style={styles.background} resizeMode="cover">
+        // <ImageBackground source={require("../../assets/images/HomeBackground.png")} style={styles.background} resizeMode="cover">
             <View style={styles.overlay}>
                 <SettingsGearButton onPress={()=>navigation.navigate("Settings")} />
                 
@@ -24,7 +24,7 @@ export default function HomeScreen({navigation}:HomeScreenProps){
                     </View>
                 </View>
             </View>
-        </ImageBackground>
+        // </ImageBackground>
     );
 }
 

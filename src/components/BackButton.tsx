@@ -14,15 +14,15 @@ export default function BackButton({onPress}:BackButtonProps){
 
 const styles=StyleSheet.create({
     backButton:{
-            position:'absolute',
-            top:50,
-            left:20,
-            zIndex:10,
-            padding:8,
+        position:'absolute',
+        top:35,
+        left:20,
+        zIndex:10,
+        padding:8,
     },  
-        backArrow:{
-            fontSize:28,
-            color:'white',
-            fontWeight:'bold',
+    backArrow:{
+        fontSize:28,
+        color:'white',
+        fontWeight:'bold',
     },
 });
