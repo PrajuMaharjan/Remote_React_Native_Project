@@ -1,19 +1,22 @@
 import {View,StyleSheet,ImageBackground} from "react-native";
 import {NativeStackNavigationProp} from "@react-navigation/native-stack";
+import {useState} from "react";
 import {RootStackParamList} from "../navigation/types";
 import ScreenTitle from "../components/ScreenTitle";
 import MenuButton from "../components/MenuButton";
-import SettingsGearButton from "../components/SettingsGearButton";
+import HapticsToggle from "../components/HapticsToggle";
 
 type HomeScreenProps={
     navigation:NativeStackNavigationProp<RootStackParamList,"Home">;
 };
 
 export default function HomeScreen({navigation}:HomeScreenProps){
+    const [hapticsEnabled,setHapticsEnabled]=useState(true);
+
     return(
         // <ImageBackground source={require("../../assets/images/HomeBackground.png")} style={styles.background} resizeMode="cover">
             <View style={styles.overlay}>
-                <SettingsGearButton onPress={()=>navigation.navigate("Settings")} />
+                <HapticsToggle hapticsEnabled={hapticsEnabled} onToggle={()=>setHapticsEnabled(!hapticsEnabled)} />
                 
                 <View style={styles.container}>
                     <ScreenTitle title="Universal Remote Control" />
