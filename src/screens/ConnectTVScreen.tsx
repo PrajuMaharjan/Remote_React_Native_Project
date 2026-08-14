@@ -1,9 +1,9 @@
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
-import BackButton from "../components/BackButton";
-import SectionHeader from "../components/SectionHeader";
-import DeviceBar,{Device} from "../components/DeviceBar";
+import BackButton from "../components/general/BackButton";
+import SectionHeader from "../components/general/SectionHeader";
+import DeviceBar,{Device} from "../components/general/DeviceBar";
 
 type ConnectTVScreenProps = {
   navigation: NativeStackNavigationProp<RootStackParamList, "ConnectTV">;

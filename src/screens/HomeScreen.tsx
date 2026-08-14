@@ -2,9 +2,9 @@ import {View,StyleSheet,ImageBackground} from "react-native";
 import {NativeStackNavigationProp} from "@react-navigation/native-stack";
 import {useState} from "react";
 import {RootStackParamList} from "../navigation/types";
-import ScreenTitle from "../components/ScreenTitle";
-import MenuButton from "../components/MenuButton";
-import HapticsToggle from "../components/HapticsToggle";
+import ScreenTitle from "../components/general/ScreenTitle";
+import MenuButton from "../components/general/MenuButton";
+import HapticsToggle from "../components/general/HapticsToggle";
 
 type HomeScreenProps={
     navigation:NativeStackNavigationProp<RootStackParamList,"Home">;
