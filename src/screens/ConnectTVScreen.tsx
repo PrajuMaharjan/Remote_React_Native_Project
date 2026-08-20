@@ -22,7 +22,8 @@ const AVAILABLE_DEVICES:Device[]=[
 export default function ConnectTVScreen({ navigation }: ConnectTVScreenProps) {
   const handleDevicePress=(device:Device)=>{
     // TO BE REPLACED BY CONNECTION LOGIC
-    console.log("Selected device:",device.name); 
+    console.log("Selected device:",device.name);
+    navigation.navigate("Remote");
   };
 
   return (

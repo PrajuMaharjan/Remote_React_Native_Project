@@ -1,26 +1,27 @@
-import {TouchableOpacity,Text,StyleSheet} from "react-native";
+import {TextInput,StyleSheet} from "react-native";
 
 interface TextDisplayProps{
-    text:string;
-    onPress:()=>void;
+    value:string;
+    onChangeText:(text:string)=>void;
 }
 
-export default function TextDisplay({text,onPress} : TextDisplayProps){
+export default function TextDisplay({value,onChangeText} : TextDisplayProps){
     return(
-        <TouchableOpacity style={styles.display} onPress={onPress} activeOpacity={0.8}>
-            <Text style={styles.text} numberOfLines={1}>
-                {text.length>0 ? text : "Tap to type..."}
-            </Text>
-
-            <Text style={styles.cursor}>|</Text>
-        </TouchableOpacity>
+        <TextInput  style={styles.input}
+                    value={value}
+                    onChangeText={onChangeText}
+                    placeholder="Tap to type..."
+                    placeholderTextColor="#444"
+                    autoCorrect={false}
+                    autoCapitalize="none"
+        />
     );
 }
 
 const styles=StyleSheet.create({
-    display:{
-        flexDirection:"row",
-        paddingVertical:12,
+    input:{
+        fontSize:16,
+        paddingVertical:14,
         paddingHorizontal:16,
         borderRadius:12,
         width:"100%",
@@ -28,14 +29,6 @@ const styles=StyleSheet.create({
         backgroundColor:'#141420',
         borderWidth:0.5,
         borderColor:'rgba(124,111,255,0.4)',
-        alignItems:'center',
+        color:'#e0dff5',
     },
-    text:{
-        flex:1,
-        fontSize:16,
-        color:"#e0dff5",
-    },
-    cursor:{
-
-    }
-})
+});

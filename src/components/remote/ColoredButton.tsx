@@ -35,7 +35,7 @@ export default function ColorButton({color,defaultLabel,onPress}:ColorButtonProp
     const [label,setLabel]=useState(defaultLabel);
     const [modalVisible,setModalVisible]=useState(false);
     const [selectedOption,setSelectedOption]=useState(defaultLabel);
-    const colors=COLOR_MAP([color]);
+    const colors=COLOR_MAP[color];
     
     // Get previously srored setting from local storage
     useEffect(()=>{
