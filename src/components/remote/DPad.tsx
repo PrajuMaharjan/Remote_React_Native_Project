@@ -8,36 +8,51 @@ type DPadProps={
     onOk:()=>void;
 };
 
+const WHEEL_SIZE=200;
+const SEGMENT_SIZE=WHEEL_SIZE/2;
+const OK_SIZE=68;
+
 export default function DPad({onUp,onDown,onLeft,onRight,onOk}:DPadProps){
     return(
         <View style={styles.container}>
             
-            {/* Up button */}
-            <View style={styles.row}>
-                <TouchableOpacity style={styles.dirButton} onPress={onUp} activeOpacity={0.7}>
-                    <Text style={styles.arrow}>▲</Text>
+
+            <View style={styles.wheel}>
+
+                {/* Up button */}
+                <TouchableOpacity style={[styles.segment,styles.segmentUp]} onPress={onUp} activeOpacity={0.7}>
+                    <View style={styles.counterRotate}>
+                        <Text style={styles.arrow}>▲</Text>
+                    </View>
                 </TouchableOpacity>
+
+                {/* Right button */}
+                <TouchableOpacity style={[styles.segment,styles.segmentRight]} onPress={onRight} activeOpacity={0.7}>
+                    <View style={styles.counterRotate}> 
+                        <Text style={styles.arrow}>▶</Text>
+                    </View>
+                </TouchableOpacity>
+
+                {/* Left button */}
+                <TouchableOpacity style={[styles.segment,styles.segmentLeft]} onPress={onLeft} activeOpacity={0.7}>
+                    <View style={styles.counterRotate}> 
+                        <Text style={styles.arrow}>◀</Text>
+                    </View>
+                </TouchableOpacity>
+
+                {/* Down Button */}
+                <TouchableOpacity style={[styles.segment,styles.segmentDown]} onPress={onDown} activeOpacity={0.7}>
+                    <View style={styles.counterRotate}> 
+                        <Text style={styles.arrow}>▼</Text>
+                    </View>
+                </TouchableOpacity>
+
             </View>
 
-            {/* Left, OK and Right button */}
-            <View style={styles.row}>
-                <TouchableOpacity style={styles.dirButton} onPress={onLeft} activeOpacity={0.7}>
-                    <Text style={styles.arrow}>◀</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.okButton} onPress={onOk} activeOpacity={0.7}>
-                    <Text style={styles.okLabel}>OK</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.dirButton} onPress={onRight} activeOpacity={0.7}>
-                    <Text style={styles.arrow}>▶</Text>
-                </TouchableOpacity>
-            </View>
-
-            {/* Down Button */}
-            <View style={styles.row}>
-                <TouchableOpacity style={styles.dirButton} onPress={onDown} activeOpacity={0.7}>
-                    <Text style={styles.arrow}>▼</Text>
-                </TouchableOpacity>
-            </View>
+            {/* Ok Button */}
+            <TouchableOpacity style={styles.okButton} onPress={onOk} activeOpacity={0.7}>
+                <Text style={styles.okLabel}>OK</Text>
+            </TouchableOpacity>
 
         </View>
     );
@@ -45,37 +60,59 @@ export default function DPad({onUp,onDown,onLeft,onRight,onOk}:DPadProps){
 
 const styles=StyleSheet.create({
     container:{
+        width:WHEEL_SIZE,
+        height:WHEEL_SIZE,
         alignItems:"center",
-        gap:4,
+        justifyContent:'center'
     },
-    row:{
-        flexDirection:"row",
-        alignItems:'center',
-        gap:4
-    },
-    dirButton:{
-        width:60,
-        height:60,
-        borderRadius:30,
-        backgroundColor:'#141420',
+    wheel:{
+        width:WHEEL_SIZE,
+        height:WHEEL_SIZE,
+        borderRadius:WHEEL_SIZE/2,
+        overflow:'hidden',
         borderWidth:0.5,
         borderColor:'#2a2a40',
+        flexDirection:"row",
+        flexWrap:"wrap",
+        transform:[{rotate:'45deg'}],
+    },
+    segment:{
+        width:SEGMENT_SIZE,
+        height:SEGMENT_SIZE,
+        backgroundColor:'#141420',
         alignItems:'center',
         justifyContent:'center',
+    },
+    segmentUp:{
+        borderTopLeftRadius:SEGMENT_SIZE,
+    },
+    segmentRight:{
+        borderTopRightRadius:SEGMENT_SIZE,
+    },
+    segmentLeft:{
+        borderBottomLeftRadius:SEGMENT_SIZE,
+    },
+    segmentDown:{
+        borderBottomRightRadius:SEGMENT_SIZE,
+    },
+    counterRotate:{
+        transform:[{rotate:"-45deg"}],
     },
     arrow:{
         fontSize:20,
         color:'#e0dff5',
     },
     okButton:{
-        width:68,
-        height:68,
-        borderRadius:34,
+        position:"absolute",
+        width:OK_SIZE,
+        height:OK_SIZE,
+        borderRadius:OK_SIZE/2,
         backgroundColor:'rgba(124,111,255,0.15)',
         borderWidth:1,
         borderColor:'rgba(124,111,255,0.45)',
         alignItems:'center',
         justifyContent:'center',
+        zIndex:2,
     },
     okLabel:{
         fontSize:16,
