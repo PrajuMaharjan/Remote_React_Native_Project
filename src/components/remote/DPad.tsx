@@ -14,46 +14,47 @@ const OK_SIZE=68;
 
 export default function DPad({onUp,onDown,onLeft,onRight,onOk}:DPadProps){
     return(
-        <View style={styles.container}>
-            
+        <View style={styles.container}>            
 
-            <View style={styles.wheel}>
+            <View style={styles.outerRing} pointerEvents="none" />
 
-                {/* Up button */}
-                <TouchableOpacity style={[styles.segment,styles.segmentUp]} onPress={onUp} activeOpacity={0.7}>
-                    <View style={styles.counterRotate}>
-                        <Text style={styles.arrow}>▲</Text>
-                    </View>
+                <View style={styles.wheel}>
+
+                    {/* Up button */}
+                    <TouchableOpacity style={[styles.segment,styles.segmentUp]} onPress={onUp} activeOpacity={0.7}>
+                        <View style={styles.counterRotate}>
+                            <Text style={styles.arrow}>▲</Text>
+                        </View>
+                    </TouchableOpacity>
+
+                    {/* Right button */}
+                    <TouchableOpacity style={[styles.segment,styles.segmentRight]} onPress={onRight} activeOpacity={0.7}>
+                        <View style={styles.counterRotate}> 
+                            <Text style={styles.arrow}>▶</Text>
+                        </View>
+                    </TouchableOpacity>
+
+                    {/* Left button */}
+                    <TouchableOpacity style={[styles.segment,styles.segmentLeft]} onPress={onLeft} activeOpacity={0.7}>
+                        <View style={styles.counterRotate}> 
+                            <Text style={styles.arrow}>◀</Text>
+                        </View>
+                    </TouchableOpacity>
+
+                    {/* Down Button */}
+                    <TouchableOpacity style={[styles.segment,styles.segmentDown]} onPress={onDown} activeOpacity={0.7}>
+                        <View style={styles.counterRotate}> 
+                            <Text style={styles.arrow}>▼</Text>
+                        </View>
+                    </TouchableOpacity>
+
+                </View>
+
+                {/* Ok Button */}
+                <TouchableOpacity style={styles.okButton} onPress={onOk} activeOpacity={0.7}>
+                    <Text style={styles.okLabel}>OK</Text>
                 </TouchableOpacity>
-
-                {/* Right button */}
-                <TouchableOpacity style={[styles.segment,styles.segmentRight]} onPress={onRight} activeOpacity={0.7}>
-                    <View style={styles.counterRotate}> 
-                        <Text style={styles.arrow}>▶</Text>
-                    </View>
-                </TouchableOpacity>
-
-                {/* Left button */}
-                <TouchableOpacity style={[styles.segment,styles.segmentLeft]} onPress={onLeft} activeOpacity={0.7}>
-                    <View style={styles.counterRotate}> 
-                        <Text style={styles.arrow}>◀</Text>
-                    </View>
-                </TouchableOpacity>
-
-                {/* Down Button */}
-                <TouchableOpacity style={[styles.segment,styles.segmentDown]} onPress={onDown} activeOpacity={0.7}>
-                    <View style={styles.counterRotate}> 
-                        <Text style={styles.arrow}>▼</Text>
-                    </View>
-                </TouchableOpacity>
-
-            </View>
-
-            {/* Ok Button */}
-            <TouchableOpacity style={styles.okButton} onPress={onOk} activeOpacity={0.7}>
-                <Text style={styles.okLabel}>OK</Text>
-            </TouchableOpacity>
-
+        
         </View>
     );
 }
@@ -65,6 +66,16 @@ const styles=StyleSheet.create({
         alignItems:"center",
         justifyContent:'center'
     },
+    outerRing:{
+        position:'absolute',
+        top:0,
+        left:0,
+        width:WHEEL_SIZE,
+        height:WHEEL_SIZE,
+        borderRadius:WHEEL_SIZE/2,
+        borderWidth:0.5,
+        borderColor:'#2a2a40',
+    },
     wheel:{
         width:WHEEL_SIZE,
         height:WHEEL_SIZE,
@@ -72,11 +83,10 @@ const styles=StyleSheet.create({
         overflow:'hidden',
         borderWidth:0.5,
         borderColor:'#2a2a40',
-        flexDirection:"row",
-        flexWrap:"wrap",
         transform:[{rotate:'45deg'}],
     },
     segment:{
+        position:'absolute',
         width:SEGMENT_SIZE,
         height:SEGMENT_SIZE,
         backgroundColor:'#141420',
@@ -84,15 +94,23 @@ const styles=StyleSheet.create({
         justifyContent:'center',
     },
     segmentUp:{
+        top:0,
+        left:0,
         borderTopLeftRadius:SEGMENT_SIZE,
     },
     segmentRight:{
+        top:0,
+        left:SEGMENT_SIZE,
         borderTopRightRadius:SEGMENT_SIZE,
     },
     segmentLeft:{
+        top:SEGMENT_SIZE,
+        left:0,
         borderBottomLeftRadius:SEGMENT_SIZE,
     },
     segmentDown:{
+        top:SEGMENT_SIZE,
+        left:SEGMENT_SIZE,
         borderBottomRightRadius:SEGMENT_SIZE,
     },
     counterRotate:{
