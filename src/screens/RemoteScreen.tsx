@@ -27,7 +27,7 @@ export default function RemoteScreen({ navigation }: RemoteScreenProps) {
                 <BackButton onPress={()=>navigation.goBack()} />
             </View>
 
-            <ScrollView style={styles.scrollContent} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
                 {/* Row 1 : Power + Mode Toggle */}
                 <View style={styles.row}>
@@ -70,50 +70,33 @@ export default function RemoteScreen({ navigation }: RemoteScreenProps) {
                     {/* Mute,home,back,pause and color buttons in the midde */}
                     <View style={styles.middleControls}>
                         
-                        {/* Mute and Home buttons*/}
-                        <View style={styles.row}>
-                            <RegularButton  icon={isMuted ? "🔇" : "🔊"}
-                                            label="Mute"
-                                            onPress={()=>{setIsMuted(!isMuted); console.log("Mute pressed");}}
-                            />
-                            <RegularButton  icon="⌂"
-                                            label="Home"
-                                            onPress={()=>console.log("Home pressed")}
-                            />
-                        </View>
-                        
-                        {/* Back and Pause buttons */}
-                        <View style={styles.row}>
-                            <RegularButton  icon="↩"
-                                            label="Back"
-                                            onPress={()=>console.log("Back pressed")}
-                            />
-                            <RegularButton  icon="⏸"
-                                            label="Pause"
-                                            onPress={()=>console.log("Pause pressed")}
-                            />
-                        </View>
+                        <View style={styles.middleGridRow}>
 
-                        {/* Color Buttons */}
-                        <View style={styles.colorRow}>
-                            <ColorButton    color="red"
-                                            defaultLabel="Subtitles"
-                                            onPress={(label)=>console.log(`${label} pressed.`)}
-                            />
-                            <ColorButton    color="green"
-                                            defaultLabel="Audio"
-                                            onPress={(label)=>console.log(`${label} pressed.`)}
-                            />
-                            <ColorButton    color="blue"
-                                            defaultLabel="Picture"
-                                            onPress={(label)=>console.log(`${label} pressed.`)}
-                            />
-                            <ColorButton    color="yellow"
-                                            defaultLabel="Sleep"
-                                            onPress={(label)=>console.log(`${label} pressed.`)}
-                            />
-                        </View>
+                            {/* Mute and Home buttons*/}
+                            <View style={styles.gridColumn}>
+                                <RegularButton  icon={isMuted ? "🔇" : "🔊"}
+                                                label="Mute"
+                                                onPress={()=>{setIsMuted(!isMuted); console.log("Mute pressed");}}
+                                />
+                                <RegularButton  icon="⌂"
+                                                label="Home"
+                                                onPress={()=>console.log("Home pressed")}
+                                />
+                            </View>
+                            
+                            {/* Back and Pause buttons */}
+                            <View style={styles.gridColumn}>
+                                <RegularButton  icon="⏸"
+                                                label="Pause"
+                                                onPress={()=>console.log("Pause pressed")}
+                                />
+                                <RegularButton  icon="↩"
+                                                label="Back"
+                                                onPress={()=>console.log("Back pressed")}
+                                />
 
+                            </View>
+                        </View>
                     </View>
 
                     {/* Chaneel button on the right */}
@@ -127,6 +110,26 @@ export default function RemoteScreen({ navigation }: RemoteScreenProps) {
 
                 </View>
 
+                {/* Color Buttons */}
+                <View style={styles.colorRow}>
+                        <ColorButton    color="red"
+                                        defaultLabel="Subtitles"
+                                        onPress={(label)=>console.log(`${label} pressed.`)}
+                        />
+                        <ColorButton    color="green"
+                                        defaultLabel="Audio"
+                                        onPress={(label)=>console.log(`${label} pressed.`)}
+                        />
+                        <ColorButton    color="blue"
+                                        defaultLabel="Picture"
+                                        onPress={(label)=>console.log(`${label} pressed.`)}
+                        />
+                        <ColorButton    color="yellow"
+                                        defaultLabel="Sleep"
+                                        onPress={(label)=>console.log(`${label} pressed.`)}
+                        />
+                </View>
+                
                 {/* Row 4 : Playback Controls */}
                 <View style={styles.row}>
                     <RegularButton  icon="⏮"
@@ -197,16 +200,23 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         justifyContent: "center",
         alignItems: "center",
-        gap: 10,
+        gap: 15,
     },
     middleControls: {
-        flex: 1,
         alignItems: "center",
         gap: 12,
+    },
+    middleGridRow:{
+        flexDirection:"row",
+        gap:12,
+    },
+    gridColumn:{
+        gap:12,
     },
     colorRow: {
         flexDirection: "row",
         gap: 6,
+        justifyContent:"center",
         width: "100%",
     },
 });
