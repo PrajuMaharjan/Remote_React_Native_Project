@@ -52,16 +52,14 @@ export default function ColorButton({color,defaultLabel,onPress}:ColorButtonProp
 
     return(
         <>
-            <TouchableOpacity   style={[styles.button,{backgroundColor:colors.bg,borderColor:colors.border}]}
+            <TouchableOpacity   style={styles.button}
                                 onPress={()=>{console.log(`${label} pressed`); onPress(label); }}
                                 onLongPress={()=>{setSelectedOption(label); setModalVisible(true); }}
                                 activeOpacity={0.7}
                                 delayLongPress={500}
             >
 
-                <Text style={[styles.label,{color:colors.text}]} numberOfLines={1} adjustsFontSizeToFit>
-                    {label}
-                </Text>
+                <View style={[styles.dot,{backgroundColor:colors.text}]} />
 
             </TouchableOpacity>
 
@@ -94,22 +92,23 @@ export default function ColorButton({color,defaultLabel,onPress}:ColorButtonProp
 
 const styles=StyleSheet.create({
     button:{
-        flex:1,
+        width:64,
         height:40,
         borderRadius:10,
         borderWidth:0.5,
+        borderColor:"#2a2a40",
+        backgroundColor:"#141420",
         alignItems:'center',
         justifyContent:'center',
-        paddingHorizontal:4,
+    },
+    dot:{
+        width:14,
+        height:14,
+        borderRadius:7,
     },
     overlay:{
         flex:1,
         color:'rgba(0,0,0,0.5)',
-    },
-    label:{
-        fontSize:11,
-        fontWeight:'600',
-        textAlign:"center",
     },
     modal:{
         backgroundColor:"#141420",

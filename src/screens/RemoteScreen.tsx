@@ -216,7 +216,6 @@ const styles = StyleSheet.create({
     colorRow: {
         flexDirection: "row",
         gap: 6,
-        justifyContent:"center",
-        width: "100%",
+        alignSelf:"center",
     },
 });
