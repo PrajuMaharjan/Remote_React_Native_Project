@@ -55,6 +55,21 @@ export default function RemoteScreen({ navigation }: RemoteScreenProps) {
                     </View>
                 )}
 
+                {/* Row 5 : Source  and Menu*/}
+                <View style={styles.sourceMenuRow}>
+                    <RegularButton  icon="⬡"
+                                    label="Source"
+                                    onPress={()=>console.log("Source pressed")}
+                    />
+
+                    <View style={styles.sourceMenuSpace} />
+
+                    <RegularButton  icon="☰"
+                                    label="Menu"
+                                    onPress={()=>console.log("Menu pressed")}
+                    />
+                </View>
+
                 {/* Row 3 : Vlolume,Several controls and Channel */}
                 <View style={styles.controlsRow}>
 
@@ -150,18 +165,6 @@ export default function RemoteScreen({ navigation }: RemoteScreenProps) {
                     />
                 </View>
 
-                {/* Row 5 : Source  and Menu*/}
-                <View style={styles.row}>
-                    <RegularButton  icon="⬡"
-                                    label="Source"
-                                    onPress={()=>console.log("Source pressed")}
-                    />
-                    <RegularButton  icon="☰"
-                                    label="Menu"
-                                    onPress={()=>console.log("Menu pressed")}
-                    />
-                </View>
-
             </ScrollView>
         </View>
     );
@@ -218,4 +221,13 @@ const styles = StyleSheet.create({
         gap: 6,
         alignSelf:"center",
     },
+    sourceMenuRow:{
+        flexDirection:"row",
+        justifyContent:"center",
+        alignItems:"center",
+        gap:10,
+    },
+    sourceMenuSpace:{
+        width:140,
+    }
 });
