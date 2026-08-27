@@ -37,23 +37,26 @@ export default function RemoteScreen({ navigation }: RemoteScreenProps) {
                     />
                 </View>
 
-                {/* Row 2 : DPad or Keyboard */}
-                {isKeyboardMode ? (
-                    <View style={styles.keyboardSection}>
-                        <TextDisplay    value={typedtext}
-                                        onChangeText={setTypedText}
-                        />
-                    </View>
-                ) : (
-                    <View style={styles.centeredRow}>
-                        <DPad   onUp={()=>console.log("Up pressed")}
-                                onDown={()=>console.log("Down pressed")}
-                                onLeft={()=>console.log("Left pressed")}
-                                onRight={()=>console.log("Right pressed")}
-                                onOk={()=>console.log("OK pressed")}
-                        />
-                    </View>
-                )}
+                {/* Wrapping the input area in a fixed height container so that nothing below it shifts position */}
+                <View style={styles.inputArea}>
+                    {/* Row 2 : DPad or Keyboard */}
+                    {isKeyboardMode ? (
+                        <View style={styles.keyboardSection}>
+                            <TextDisplay    value={typedtext}
+                                            onChangeText={setTypedText}
+                            />
+                        </View>
+                    ) : (
+                        <View style={styles.centeredRow}>
+                            <DPad   onUp={()=>console.log("Up pressed")}
+                                    onDown={()=>console.log("Down pressed")}
+                                    onLeft={()=>console.log("Left pressed")}
+                                    onRight={()=>console.log("Right pressed")}
+                                    onOk={()=>console.log("OK pressed")}
+                            />
+                        </View>
+                    )}
+                </View>
 
                 {/* Row 5 : Source  and Menu*/}
                 <View style={styles.sourceMenuRow}>
@@ -196,6 +199,10 @@ const styles = StyleSheet.create({
     keyboardSection: {
         gap: 12,
         width: "100%",
+    },
+    inputArea:{
+        height:200,
+        justifyContent:'center',
     },
     controlsRow: {
         flexDirection: "row",

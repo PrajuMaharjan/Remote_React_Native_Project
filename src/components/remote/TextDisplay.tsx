@@ -14,6 +14,8 @@ export default function TextDisplay({value,onChangeText} : TextDisplayProps){
                     placeholderTextColor="#444"
                     autoCorrect={false}
                     autoCapitalize="none"
+                    multiline
+                    textAlignVertical="top"
         />
     );
 }
@@ -25,7 +27,7 @@ const styles=StyleSheet.create({
         paddingHorizontal:16,
         borderRadius:12,
         width:"100%",
-        minHeight:52,
+        minHeight:200,
         backgroundColor:'#141420',
         borderWidth:0.5,
         borderColor:'rgba(124,111,255,0.4)',
