@@ -76,8 +76,7 @@ export default function RemoteScreen({ navigation }: RemoteScreenProps) {
                     {/* Volume on the left */}
                     <LongButton topIcon="+"
                                 bottomIcon="-"
-                                topLabel="Vol +"
-                                bottomLabel="Vol -"
+                                centerLabel="VOL"
                                 onTopPress={()=>console.log("Volume up pressed")}
                                 onBottomPress={()=>console.log("Volume down pressed")}
                     />
@@ -115,10 +114,9 @@ export default function RemoteScreen({ navigation }: RemoteScreenProps) {
                     </View>
 
                     {/* Chaneel button on the right */}
-                    <LongButton topIcon="+"
-                                bottomIcon="-"
-                                topLabel="Ch +"
-                                bottomLabel="Ch -"
+                    <LongButton topIcon="˄"
+                                bottomIcon="˅"
+                                centerLabel="CH"
                                 onTopPress={()=>console.log("Channel up pressed")}
                                 onBottomPress={()=>console.log("Channel down pressed")}
                     />
