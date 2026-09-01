@@ -1,29 +1,35 @@
-import { View, Text, StyleSheet, ScrollView } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Alert } from "react-native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
 import BackButton from "../components/general/BackButton";
 import SectionHeader from "../components/general/SectionHeader";
 import DeviceBar,{Device} from "../components/general/DeviceBar";
+import useSamsungTV from "../hooks/useSamsungTV";
+import useTVStorage from "@/hooks/useTVStorage";
 
 type ConnectTVScreenProps = {
   navigation: NativeStackNavigationProp<RootStackParamList, "ConnectTV">;
 };
-
-// THIS IS PLACEHOLDER DATA - TO BE REPLACED BY LOGIC LATER
-const PAIRED_DEVICES:Device[]=[
-  {id:"1",name:"Living Room TV",brand:"samsung",ipAddress:"192.168.1.42"},
-  {id:"2",name:"Bedroom TV",brand:"palsonic",ipAddress:"192.168.1.57"},
-];
 
 const AVAILABLE_DEVICES:Device[]=[
   {id:"3",name:"Samsung Smart TV",brand:"samsung",ipAddress:"192.168.1.88"},
 ];
 
 export default function ConnectTVScreen({ navigation }: ConnectTVScreenProps) {
-  const handleDevicePress=(device:Device)=>{
-    // TO BE REPLACED BY CONNECTION LOGIC
-    console.log("Selected device:",device.name);
-    navigation.navigate("Remote");
+  
+  const {connect}=useSamsungTV();
+  const {pairedDevices,saveDevice}=useTVStorage();
+
+  const handleDevicePress=async (device:Device)=>{
+    try{
+      await connect(device);
+      await saveDevice(device);
+      navigation.navigate("Remote");
+    }catch(err){
+      Alert.alert("Connection failed",
+        err instanceof Error ? err.message : "Could not connect to this TV."
+      );
+    }
   };
 
   return (
@@ -37,8 +43,8 @@ export default function ConnectTVScreen({ navigation }: ConnectTVScreenProps) {
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
         <SectionHeader title="Previously Connected" />
-        {PAIRED_DEVICES.length>0 ? (
-          PAIRED_DEVICES.map((device)=>(
+        {pairedDevices.length>0 ? (
+          pairedDevices.map((device)=>(
             <DeviceBar key={device.id} device={device} onPress={handleDevicePress} />
           ))
         ) : (

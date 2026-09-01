@@ -2,6 +2,7 @@ import React,{useState} from "react";
 import { View, StyleSheet, ScrollView } from "react-native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
+
 import BackButton from "../components/general/BackButton";
 import PowerButton from "../components/remote/PowerButton";
 import ModeToggle from "../components/remote/ModeToggle";
@@ -11,6 +12,9 @@ import LongButton from "../components/remote/LongButton";
 import RegularButton from "../components/remote/RegularButton";
 import ColorButton from "../components/remote/ColoredButton";
 
+import useSamsungTV from "../hooks/useSamsungTV";
+import { SamsungCommands } from "@/services/SamsungCommands";
+
 type RemoteScreenProps = {
     navigation: NativeStackNavigationProp<RootStackParamList, "Remote">;
 };
@@ -19,6 +23,7 @@ export default function RemoteScreen({ navigation }: RemoteScreenProps) {
     const [isMuted,setIsMuted]=useState(false);
     const [isKeyboardMode,setIsKeyboardMode]=useState(false);
     const [typedtext,setTypedText]=useState("");
+    const {sendKey}=useSamsungTV();
 
     return (
         <View style={styles.container}>
@@ -31,7 +36,7 @@ export default function RemoteScreen({ navigation }: RemoteScreenProps) {
 
                 {/* Row 1 : Power + Mode Toggle */}
                 <View style={styles.row}>
-                    <PowerButton onPress={()=>console.log("Power pressed")} />
+                    <PowerButton onPress={()=>sendKey(SamsungCommands.POWER)} />
                     <ModeToggle isKeyboardMode={isKeyboardMode}
                                 onToggle={()=>setIsKeyboardMode(!isKeyboardMode)}
                     />
@@ -48,11 +53,11 @@ export default function RemoteScreen({ navigation }: RemoteScreenProps) {
                         </View>
                     ) : (
                         <View style={styles.centeredRow}>
-                            <DPad   onUp={()=>console.log("Up pressed")}
-                                    onDown={()=>console.log("Down pressed")}
-                                    onLeft={()=>console.log("Left pressed")}
-                                    onRight={()=>console.log("Right pressed")}
-                                    onOk={()=>console.log("OK pressed")}
+                            <DPad   onUp={()=>sendKey(SamsungCommands.UP)}
+                                    onDown={()=>sendKey(SamsungCommands.DOWN)}
+                                    onLeft={()=>sendKey(SamsungCommands.LEFT)}
+                                    onRight={()=>sendKey(SamsungCommands.RIGHT)}
+                                    onOk={()=>sendKey(SamsungCommands.OK)}
                             />
                         </View>
                     )}
@@ -62,26 +67,26 @@ export default function RemoteScreen({ navigation }: RemoteScreenProps) {
                 <View style={styles.sourceMenuRow}>
                     <RegularButton  icon="⬡"
                                     label="Source"
-                                    onPress={()=>console.log("Source pressed")}
+                                    onPress={()=>sendKey(SamsungCommands.SOURCE)}
                     />
 
                     <View style={styles.sourceMenuSpace} />
 
                     <RegularButton  icon="☰"
                                     label="Menu"
-                                    onPress={()=>console.log("Menu pressed")}
+                                    onPress={()=>sendKey(SamsungCommands.MENU)}
                     />
                 </View>
 
-                {/* Row 3 : Vlolume,Several controls and Channel */}
+                {/* Row 3 : Volume,Several controls and Channel */}
                 <View style={styles.controlsRow}>
 
                     {/* Volume on the left */}
                     <LongButton topIcon="+"
                                 bottomIcon="-"
                                 centerLabel="VOL"
-                                onTopPress={()=>console.log("Volume up pressed")}
-                                onBottomPress={()=>console.log("Volume down pressed")}
+                                onTopPress={()=>sendKey(SamsungCommands.VOLUME_UP)}
+                                onBottomPress={()=>sendKey(SamsungCommands.VOLUME_DOWN)}
                     />
 
                     {/* Mute,home,back,pause and color buttons in the midde */}
@@ -93,11 +98,11 @@ export default function RemoteScreen({ navigation }: RemoteScreenProps) {
                             <View style={styles.gridColumn}>
                                 <RegularButton  icon={isMuted ? "🔇" : "🔊"}
                                                 label="Mute"
-                                                onPress={()=>{setIsMuted(!isMuted); console.log("Mute pressed");}}
+                                                onPress={()=>{setIsMuted(!isMuted); sendKey(SamsungCommands.MUTE); }}
                                 />
                                 <RegularButton  icon="⌂"
                                                 label="Home"
-                                                onPress={()=>console.log("Home pressed")}
+                                                onPress={()=>sendKey(SamsungCommands.HOME)}
                                 />
                             </View>
                             
@@ -105,11 +110,11 @@ export default function RemoteScreen({ navigation }: RemoteScreenProps) {
                             <View style={styles.gridColumn}>
                                 <RegularButton  icon="⏸"
                                                 label="Pause"
-                                                onPress={()=>console.log("Pause pressed")}
+                                                onPress={()=>sendKey(SamsungCommands.PAUSE)}
                                 />
                                 <RegularButton  icon="↩"
                                                 label="Back"
-                                                onPress={()=>console.log("Back pressed")}
+                                                onPress={()=>sendKey(SamsungCommands.BACK)}
                                 />
 
                             </View>
@@ -120,8 +125,8 @@ export default function RemoteScreen({ navigation }: RemoteScreenProps) {
                     <LongButton topIcon="˄"
                                 bottomIcon="˅"
                                 centerLabel="CH"
-                                onTopPress={()=>console.log("Channel up pressed")}
-                                onBottomPress={()=>console.log("Channel down pressed")}
+                                onTopPress={()=>sendKey(SamsungCommands.CHANNEL_UP)}
+                                onBottomPress={()=>sendKey(SamsungCommands.CHANNEL_DOWN)}
                     />
 
                 </View>
@@ -130,19 +135,19 @@ export default function RemoteScreen({ navigation }: RemoteScreenProps) {
                 <View style={styles.colorRow}>
                         <ColorButton    color="red"
                                         defaultLabel="Subtitles"
-                                        onPress={(label)=>console.log(`${label} pressed.`)}
+                                        onPress={()=>sendKey(SamsungCommands.RED)}
                         />
                         <ColorButton    color="green"
                                         defaultLabel="Audio"
-                                        onPress={(label)=>console.log(`${label} pressed.`)}
+                                        onPress={()=>sendKey(SamsungCommands.GREEN)}
                         />
                         <ColorButton    color="blue"
                                         defaultLabel="Picture"
-                                        onPress={(label)=>console.log(`${label} pressed.`)}
+                                        onPress={()=>sendKey(SamsungCommands.BLUE)}
                         />
                         <ColorButton    color="yellow"
                                         defaultLabel="Sleep"
-                                        onPress={(label)=>console.log(`${label} pressed.`)}
+                                        onPress={()=>sendKey(SamsungCommands.YELLOW)}
                         />
                 </View>
                 
@@ -150,19 +155,19 @@ export default function RemoteScreen({ navigation }: RemoteScreenProps) {
                 <View style={styles.row}>
                     <RegularButton  icon="⏮"
                                     label="Skip backward"
-                                    onPress={()=>console.log("Skip Back pressed")}
+                                    onPress={()=>console.log("Skip Back - not supported")}
                     />
                     <RegularButton  icon="⏪"
                                     label="Rewind"
-                                    onPress={()=>console.log("Rewind pressed")}
+                                    onPress={()=>sendKey(SamsungCommands.REWIND)}
                     />
                     <RegularButton  icon="⏩"
                                     label="Fast Forward"
-                                    onPress={()=>console.log("Fast Forward pressed")}
+                                    onPress={()=>sendKey(SamsungCommands.FAST_FORWARD)}
                     />
                     <RegularButton  icon="⏭"
                                     label="Skip forward"
-                                    onPress={()=>console.log("Skip Forward pressed")}
+                                    onPress={()=>console.log("Skip Forward - not supported")}
                     />
                 </View>
 
