@@ -3,4 +3,5 @@ export type RootStackParamList={
     ConnectTV:undefined;
     ConnectAC:undefined;
     Remote:undefined;
+    ManualTVEntry:undefined;
 };

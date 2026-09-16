@@ -7,6 +7,7 @@ import HomeScreen from "../screens/HomeScreen";
 import ConnectTVScreen from "../screens/ConnectTVScreen";
 import ConnectACScreen from "../screens/ConnectACScreen";
 import RemoteScreen from "../screens/RemoteScreen";
+import ManualTVEntryScreen from "../screens/ManualTVEntryScreen";
 
 const Stack=createNativeStackNavigator<RootStackParamList>();
 
@@ -26,6 +27,7 @@ export default function AppNavigator(){
           <Stack.Screen name="ConnectTV" component={ConnectTVScreen} />
           <Stack.Screen name="ConnectAC" component={ConnectACScreen} />
           <Stack.Screen name="Remote" component={RemoteScreen} />
+          <Stack.Screen name="ManualTVEntry" component={ManualTVEntryScreen} />
 
         </Stack.Navigator>
       </NavigationContainer>

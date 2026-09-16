@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, Alert } from "react-native";
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert, TouchableOpacity } from "react-native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
 import BackButton from "../components/general/BackButton";
@@ -6,19 +6,17 @@ import SectionHeader from "../components/general/SectionHeader";
 import DeviceBar,{Device} from "../components/general/DeviceBar";
 import useSamsungTV from "../hooks/useSamsungTV";
 import useTVStorage from "@/hooks/useTVStorage";
+import useDiscovery from "@/hooks/useDiscovery";
 
 type ConnectTVScreenProps = {
   navigation: NativeStackNavigationProp<RootStackParamList, "ConnectTV">;
 };
 
-const AVAILABLE_DEVICES:Device[]=[
-  {id:"3",name:"Samsung Smart TV",brand:"samsung",ipAddress:"192.168.1.88"},
-];
-
 export default function ConnectTVScreen({ navigation }: ConnectTVScreenProps) {
   
   const {connect}=useSamsungTV();
   const {pairedDevices,saveDevice}=useTVStorage();
+  const {discoveredDevices,isScanning,startScan}=useDiscovery();
 
   const handleDevicePress=async (device:Device)=>{
     try{
@@ -52,12 +50,21 @@ export default function ConnectTVScreen({ navigation }: ConnectTVScreenProps) {
         )}
         
         <SectionHeader title="Available Devices" />
-        {AVAILABLE_DEVICES.length>0 ? (
-          AVAILABLE_DEVICES.map((device)=>(
+
+        <View style={styles.actionsRow}>
+          <TouchableOpacity style={styles.actionButton} onPress={startScan} disabled={isScanning} activeOpacity={0.7}>
+            <Text style={styles.actionLabel}>Add Manually</Text>
+          </TouchableOpacity>
+        </View>
+
+        {discoveredDevices.length>0 ? (
+          discoveredDevices.map((device)=>(
             <DeviceBar key={device.id} device={device} onPress={handleDevicePress} />
           ))
         ) : (
-          <Text style={styles.emptyText}>No devices found on this network</Text>
+          <Text style={styles.emptyText}>
+            {isScanning ? "Scanning..." : "No devices found - tap Scan or add one manually"}
+          </Text>
         )}
 
       </ScrollView>
@@ -88,6 +95,25 @@ const styles = StyleSheet.create({
   },
   scroll:{
     flex:1,
+  },
+  actionsRow:{
+    flexDirection:"row",
+    gap:10,
+    paddingHorizontal:20,
+    marginBottom:8,
+  },
+  actionButton:{
+    flex:1,
+    paddingVertical:12,
+    backgroundColor:"rgba(124,111,255,0.15)",
+    borderColor:"rgba(124,111,255,0.4)",
+    borderWidth:0.5,
+    alignItems:"center",
+  },
+  actionLabel:{
+    color:"#a78bfa",
+    fontSize:14,
+    fontWeight:"600",
   },
   scrollContent:{
     paddingBottom:40,
