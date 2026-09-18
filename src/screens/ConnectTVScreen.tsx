@@ -52,9 +52,15 @@ export default function ConnectTVScreen({ navigation }: ConnectTVScreenProps) {
         <SectionHeader title="Available Devices" />
 
         <View style={styles.actionsRow}>
+          
           <TouchableOpacity style={styles.actionButton} onPress={startScan} disabled={isScanning} activeOpacity={0.7}>
+            {isScanning ? <ActivityIndicator color="#a78bfa" /> : <Text style={styles.actionLabel}>Scan for TVs</Text>}
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.actionButton} onPress={()=>navigation.navigate("ManualTVEntry")} activeOpacity={0.7}>
             <Text style={styles.actionLabel}>Add Manually</Text>
           </TouchableOpacity>
+          
         </View>
 
         {discoveredDevices.length>0 ? (
