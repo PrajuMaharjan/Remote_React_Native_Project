@@ -1,23 +1,6 @@
 import {SAMSUNG_WS_PORT,SAMSUNG_WS_PATH,CONNECTION_TIMEOUT_MS,RECONNECT_DELAY_MS,RECONNECT_RETRY_COUNT} from "../constants/network";
 import {SamsungCommand} from "./SamsungCommands";
-
-// Encode the name for security purposes
-function base64Encode(input:string):string{
-    const chars="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"; // Characters used by the base 64 encding
-    let result=""; // Store the encoded string
-    let i=0; 
-    while(i<input.length){
-        const a=input.charCodeAt(i++);
-        const b=i<input.length ? input.charCodeAt(i++) : NaN;
-        const c=i<input.length ? input.charCodeAt(i++) : NaN;
-        
-        result += chars[a >> 2]; // Shift each character to the right(bit wise)
-        result += chars[((a & 3) << 4) | (isNaN(b) ? 0 : b >> 4)];
-        result += isNaN(b) ? "=" : chars[((b & 15) << 2) | (isNaN(c) ? 0 : c >> 6)];
-        result += isNaN(c) ? "=" : chars[c && 63];
-    }
-    return result;
-}
+import {base64Encode} from "../utils/base64";
 
 export type SamsungWSServiceOptions={
     ip:string;
@@ -49,7 +32,7 @@ export default class SansungWSService{
         const encodedName=base64Encode(this.options.appName);
         const tokenParam=this.options.token ? `&token=${this.options.token}` : "";
 
-        return `wss://${this.options.ip}:${SAMSUNG_WS_PATH}/${SAMSUNG_WS_PATH}?name=${encodedName}${tokenParam}`;
+        return `wss://${this.options.ip}:${SAMSUNG_WS_PORT}/${SAMSUNG_WS_PATH}?name=${encodedName}${tokenParam}`;
     }
 
     connect():Promise<void>{
