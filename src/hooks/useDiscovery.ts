@@ -1,12 +1,21 @@
 import {useCallback,useEffect,useRef,useState} from "react";
 import dgram from "react-native-udp";
 import {Device} from "../components/general/DeviceBar";
+import {SAMSUNG_WS_PORT,SAMSUNG_WS_PATH,PROBE_TIMEOUT_MS} from "../constants/network";
+import {getTVToken} from "../services/StorageService";
+import {base64Encode} from "../utils/base64";
+import {APP_NAME} from "../config/appConfig";
 
 const SSDP_MULTICAST_ADDRESS="239.255.255.250";
 const SSDP_MULTICAST_PORT=1900;
 
-const SSDP_SEARCH_TARGET="urn:samsung.com:device:RemoteControlReceiver:1";
+const SSDP_SEARCH_TARGET="ssdp:all";
 const SCAN_DUARTION_MS=4000;
+
+function isSamsungResponse(response:string){
+    const serverMatch=response.match(/SERVER:\s*([^\r\n]+)/i);
+    return !!serverMatch && serverMatch[1].toLowerCase().includes("samsung");
+}
 
 export default function useDiscovery(){
     const [discoveredDevices,setDiscoveredDevices]=useState<Device[]>([]);
@@ -14,49 +23,126 @@ export default function useDiscovery(){
 
     const socketRef=useRef<any>(null);
     const scanTimeoutRef=useRef<ReturnType<typeof setTimeout> | null>(null);
+    const candidateIPsRef=useRef<Set<string>>(new Set());
+    const probeSocketsRef=useRef<Set<WebSocket>>(new Set());
+    const mountedRef=useRef(true);
 
-    const stopScan=useCallback(()=>{
+    const probeTV=useCallback(async(ip:string) : Promise<Device | null>=>{
+        let token:string | null=null;
+        
+        try{
+            token=await getTVToken(ip);
+        }catch{
+            token=null;
+        }
+
+        return new Promise<Device | null>((resolve)=>{
+            let settled=false;
+            const settle=(result:Device | null)=>{
+                if(settled) return;
+                settled=true;
+                resolve(result);
+            };
+
+            const encodedName=base64Encode(APP_NAME);
+            const tokenParam=token ? `&token=${token}` : "";
+            const url=`wss://$${ip}:${SAMSUNG_WS_PORT}/${SAMSUNG_WS_PATH}?name=${encodedName}${tokenParam}`;
+
+            const socket=new WebSocket(url);
+            probeSocketsRef.current.add(socket);
+
+            const cleanupSocket=()=>{
+                probeSocketsRef.current.delete(socket);
+                socket.close();
+            };
+
+            const timeout=setTimeout(()=>{
+                cleanupSocket();
+                settle(null);
+            },PROBE_TIMEOUT_MS);
+
+            socket.onopen=()=>{
+                clearTimeout(timeout);
+                cleanupSocket();
+                settle({
+                    id:ip,
+                    name:`Samsung TV (${ip})`,
+                    brand:"samsung",
+                    ipAddress:ip,
+                });
+            };
+
+            socket.onerror=()=>{
+                clearTimeout(timeout);
+                cleanupSocket();
+                settle(null);                
+            };
+        });
+    },[]);
+
+    const finishSsdpAndProbe=useCallback(async() => {
+
         if(scanTimeoutRef.current){
             clearTimeout(scanTimeoutRef.current);
             scanTimeoutRef.current=null;
         }
+
         socketRef.current?.close();
         socketRef.current=null;
-        setIsScanning(false);
+
+        const candidateIPs=Array.from(candidateIPsRef.current);
+        candidateIPsRef.current=new Set();
+
+        if(candidateIPs.length===0){
+            if(mountedRef.current) setIsScanning(false);
+            return;
+        }
+
+        const results=await Promise.all(candidateIPs.map(probeTV));
+        const foundDevices=results.filter((d):d is Device=>d!==null);
+
+        if(mountedRef.current){
+            setDiscoveredDevices(foundDevices);
+            setIsScanning(false);
+        }
+    },[probeTV]);
+
+    const abortScan=useCallback((reason:string)=>{
+        console.log("abortScan called, reason",reason);
+        
+        if(scanTimeoutRef.current){
+            clearTimeout(scanTimeoutRef.current);
+            scanTimeoutRef.current=null;
+        }
+        
+        socketRef.current?.close();
+        socketRef.current=null;
+        candidateIPsRef.current=new Set();
+        if(mountedRef.current) setIsScanning(false);
     },[]);
 
     const startScan=useCallback(()=>{
         setDiscoveredDevices([]); // Clear results from previous scans
         setIsScanning(true);
+        candidateIPsRef.current=new Set();
 
         const socket:any=dgram.createSocket({type:"udp4"});
         socketRef.current=socket;
 
         socket.on("message",(msg:any,rinfo:{address:string})=>{
             const response=msg.toString();
-            if(!response.includes(SSDP_SEARCH_TARGET)) return;
-
-            const usnMatch=response.match(/USN:\s*uuid:([^:\r\n]+)/i);
-            const id=usnMatch ? usnMatch[1] : rinfo.address;
-
-            setDiscoveredDevices((current)=>{
-                if(current.some((d)=>d.id===id)) return current;
-                const device:Device={
-                    id,
-                    name:`Samsung TV (${rinfo.address})`,
-                    brand:"samsung",
-                    ipAddress:rinfo.address,
-                };
-                return [...current,device];
-            });
+            if(!isSamsungResponse(response)) return;
+            candidateIPsRef.current.add(rinfo.address);
         });
 
-        socket.on("error",()=>{
-            stopScan();
+        socket.on("error",(err:any)=>{
+            console.log("SSDP scan error : ",err);
+            abortScan("Socket error");
         });
 
         socket.once("listening",()=>{
-            socket.setBroadcast(true);
+
+            socket.addMembership(SSDP_MULTICAST_ADDRESS);
 
             const searchMessage="M-SEARCH * HTTP/1.1\r\n" +
                                 `HOST: ${SSDP_MULTICAST_ADDRESS}:${SSDP_MULTICAST_PORT}\r\n` +
@@ -65,16 +151,33 @@ export default function useDiscovery(){
                                 `ST: ${SSDP_SEARCH_TARGET}\r\n` +
                                 "\r\n";
 
-            socket.send(searchMessage,undefined,undefined,SSDP_MULTICAST_PORT,SSDP_MULTICAST_ADDRESS);
+            socket.send(searchMessage,undefined,undefined,SSDP_MULTICAST_PORT,SSDP_MULTICAST_ADDRESS,(err:any)=>{
+                if(err) console.log("SSDP send error : ",err);
+                else console.log("SSDP send succeeded");
+            });
         });
 
         socket.bind(0); // Do not harcode a port
 
-        scanTimeoutRef.current=setTimeout(stopScan,SCAN_DUARTION_MS);
-    },[stopScan]);
+        scanTimeoutRef.current=setTimeout(()=>{finishSsdpAndProbe();},SCAN_DUARTION_MS);
+    },[abortScan,finishSsdpAndProbe]);
 
     // Clean up for mid scan unmount
-    useEffect(()=>stopScan,[stopScan]);
+    useEffect(()=>{
+        mountedRef.current=true;
+        return()=>{
+            mountedRef.current=false;
+            if(scanTimeoutRef.current){
+                clearTimeout(scanTimeoutRef.current);
+                scanTimeoutRef.current=null;
+        }
+
+        socketRef.current.close();
+        socketRef.current=null;
+        probeSocketsRef.current.forEach((s)=>s.close());
+        probeSocketsRef.current=new Set();
+        };
+    },[]);
 
     return {discoveredDevices,isScanning,startScan};
 }
