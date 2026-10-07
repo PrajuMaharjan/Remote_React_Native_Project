@@ -46,7 +46,7 @@ export default function useDiscovery(){
 
             const encodedName=base64Encode(APP_NAME);
             const tokenParam=token ? `&token=${token}` : "";
-            const url=`wss://$${ip}:${SAMSUNG_WS_PORT}/${SAMSUNG_WS_PATH}?name=${encodedName}${tokenParam}`;
+            const url=`wss://${ip}:${SAMSUNG_WS_PORT}/${SAMSUNG_WS_PATH}?name=${encodedName}${tokenParam}`;
 
             const socket=new WebSocket(url);
             probeSocketsRef.current.add(socket);
@@ -64,6 +64,7 @@ export default function useDiscovery(){
             socket.onopen=()=>{
                 clearTimeout(timeout);
                 cleanupSocket();
+                console.log("Probe succeeded for ",ip);
                 settle({
                     id:ip,
                     name:`Samsung TV (${ip})`,
@@ -72,11 +73,17 @@ export default function useDiscovery(){
                 });
             };
 
-            socket.onerror=()=>{
+            socket.onerror=(event:any)=>{
                 clearTimeout(timeout);
                 cleanupSocket();
+                console.log("Probe failed/errored for",ip,"— message:",event?.message);
                 settle(null);                
             };
+
+            socket.onclose=(event:any)=>{
+                console.log("Probe socket closed for",ip,"— code:",event?.code,"reason:",event?.reason);
+            };
+            
         });
     },[]);
 
@@ -92,13 +99,16 @@ export default function useDiscovery(){
 
         const candidateIPs=Array.from(candidateIPsRef.current);
         candidateIPsRef.current=new Set();
+        console.log("Probe phase starting, candidates:",candidateIPs);
 
         if(candidateIPs.length===0){
+            console.log("No candidates,skipping probe phase");
             if(mountedRef.current) setIsScanning(false);
             return;
         }
 
         const results=await Promise.all(candidateIPs.map(probeTV));
+        console.log("Probe phase results",results);
         const foundDevices=results.filter((d):d is Device=>d!==null);
 
         if(mountedRef.current){
@@ -131,7 +141,10 @@ export default function useDiscovery(){
 
         socket.on("message",(msg:any,rinfo:{address:string})=>{
             const response=msg.toString();
-            if(!isSamsungResponse(response)) return;
+            const isSamsung=isSamsungResponse(response);
+            console.log("SSDP reply from",rinfo.address,"- Samsung match : ",isSamsung);
+
+            if(!isSamsung) return;
             candidateIPsRef.current.add(rinfo.address);
         });
 
@@ -172,7 +185,7 @@ export default function useDiscovery(){
                 scanTimeoutRef.current=null;
         }
 
-        socketRef.current.close();
+        socketRef.current?.close();
         socketRef.current=null;
         probeSocketsRef.current.forEach((s)=>s.close());
         probeSocketsRef.current=new Set();
