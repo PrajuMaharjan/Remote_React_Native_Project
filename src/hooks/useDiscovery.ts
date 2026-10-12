@@ -1,5 +1,6 @@
 import {useCallback,useEffect,useRef,useState} from "react";
-import dgram from "react-native-udp";
+import ReactMativeUdpTurbo from "react-native-udp-turbo";
+import {Buffer} from "buffer";
 import {Device} from "../components/general/DeviceBar";
 import {SAMSUNG_WS_PORT,SAMSUNG_WS_PATH,PROBE_TIMEOUT_MS} from "../constants/network";
 import {getTVToken} from "../services/StorageService";
@@ -21,11 +22,31 @@ export default function useDiscovery(){
     const [discoveredDevices,setDiscoveredDevices]=useState<Device[]>([]);
     const [isScanning,setIsScanning]=useState(false);
 
-    const socketRef=useRef<any>(null);
+    const socketIdRef=useRef<number | null>(null);
     const scanTimeoutRef=useRef<ReturnType<typeof setTimeout> | null>(null);
     const candidateIPsRef=useRef<Set<string>>(new Set());
     const probeSocketsRef=useRef<Set<WebSocket>>(new Set());
     const mountedRef=useRef(true);
+    const receivingRef=useRef(false);
+
+    const receiveLoop=useCallback(async(id:number)=>{
+        while(receivingRef.current){
+            let base64Message:string;
+            try{
+                base64Message=await ReactMativeUdpTurbo.receive(id);
+            }catch{
+                break;
+            }
+        
+            const response=Buffer.from(base64Message,"base64").toString("ascii");
+            const isSamsung=isSamsungResponse(response);
+            console.log("SSDP reply - Samsung match : ",isSamsung);
+            if(!isSamsung) continue;
+
+            const locationMatch=response.match(/LOCATION:\s*https?:\/\/([^:\/\r\n]+)/i);
+            if(locationMatch) candidateIPsRef.current.add(locationMatch[1]);
+        }
+    },[]);
 
     const probeTV=useCallback(async(ip:string) : Promise<Device | null>=>{
         let token:string | null=null;
@@ -94,21 +115,22 @@ export default function useDiscovery(){
             scanTimeoutRef.current=null;
         }
 
-        socketRef.current?.close();
-        socketRef.current=null;
+        receivingRef.current=false;
+        if(socketIdRef.current !== null){
+            await ReactMativeUdpTurbo.close(socketIdRef.current);
+            socketIdRef.current=null;
+        }
 
         const candidateIPs=Array.from(candidateIPsRef.current);
         candidateIPsRef.current=new Set();
         console.log("Probe phase starting, candidates:",candidateIPs);
 
         if(candidateIPs.length===0){
-            console.log("No candidates,skipping probe phase");
             if(mountedRef.current) setIsScanning(false);
             return;
         }
 
         const results=await Promise.all(candidateIPs.map(probeTV));
-        console.log("Probe phase results",results);
         const foundDevices=results.filter((d):d is Device=>d!==null);
 
         if(mountedRef.current){
@@ -117,45 +139,20 @@ export default function useDiscovery(){
         }
     },[probeTV]);
 
-    const abortScan=useCallback((reason:string)=>{
-        console.log("abortScan called, reason",reason);
-        
-        if(scanTimeoutRef.current){
-            clearTimeout(scanTimeoutRef.current);
-            scanTimeoutRef.current=null;
-        }
-        
-        socketRef.current?.close();
-        socketRef.current=null;
-        candidateIPsRef.current=new Set();
-        if(mountedRef.current) setIsScanning(false);
-    },[]);
-
-    const startScan=useCallback(()=>{
+    const startScan=useCallback(async()=>{
         setDiscoveredDevices([]); // Clear results from previous scans
         setIsScanning(true);
         candidateIPsRef.current=new Set();
 
-        const socket:any=dgram.createSocket({type:"udp4"});
-        socketRef.current=socket;
+        const id=ReactMativeUdpTurbo.createSocket({type:"udp4"});
+        socketIdRef.current=id;
 
-        socket.on("message",(msg:any,rinfo:{address:string})=>{
-            const response=msg.toString();
-            const isSamsung=isSamsungResponse(response);
-            console.log("SSDP reply from",rinfo.address,"- Samsung match : ",isSamsung);
+        try{
+            await ReactMativeUdpTurbo.bind(id,0,"0.0.0.0",{});
+            await ReactMativeUdpTurbo.addMembership(id,SSDP_MULTICAST_ADDRESS);
 
-            if(!isSamsung) return;
-            candidateIPsRef.current.add(rinfo.address);
-        });
-
-        socket.on("error",(err:any)=>{
-            console.log("SSDP scan error : ",err);
-            abortScan("Socket error");
-        });
-
-        socket.once("listening",()=>{
-
-            socket.addMembership(SSDP_MULTICAST_ADDRESS);
+            receivingRef.current=true;
+            receiveLoop(id);
 
             const searchMessage="M-SEARCH * HTTP/1.1\r\n" +
                                 `HOST: ${SSDP_MULTICAST_ADDRESS}:${SSDP_MULTICAST_PORT}\r\n` +
@@ -164,33 +161,41 @@ export default function useDiscovery(){
                                 `ST: ${SSDP_SEARCH_TARGET}\r\n` +
                                 "\r\n";
 
-            socket.send(searchMessage,undefined,undefined,SSDP_MULTICAST_PORT,SSDP_MULTICAST_ADDRESS,(err:any)=>{
-                if(err) console.log("SSDP send error : ",err);
-                else console.log("SSDP send succeeded");
-            });
-        });
-
-        socket.bind(0); // Do not harcode a port
+            const encodedMessage=Buffer.from(searchMessage,"ascii").toString("base64");
+            await ReactMativeUdpTurbo.sendBase64(id,encodedMessage,SSDP_MULTICAST_PORT,SSDP_MULTICAST_ADDRESS);
+            console.log("SSDP send succeeded");
+        }catch(err){
+            console.log("SSDP scan error : ",err);
+            receivingRef.current=false;
+            if(mountedRef.current) setIsScanning(false);
+            return;
+        }
 
         scanTimeoutRef.current=setTimeout(()=>{finishSsdpAndProbe();},SCAN_DUARTION_MS);
-    },[abortScan,finishSsdpAndProbe]);
+    },[finishSsdpAndProbe,receiveLoop]);
 
-    // Clean up for mid scan unmount
     useEffect(()=>{
         mountedRef.current=true;
+
         return()=>{
             mountedRef.current=false;
+            receivingRef.current=false;
+
             if(scanTimeoutRef.current){
                 clearTimeout(scanTimeoutRef.current);
                 scanTimeoutRef.current=null;
-        }
+            }
 
-        socketRef.current?.close();
-        socketRef.current=null;
-        probeSocketsRef.current.forEach((s)=>s.close());
-        probeSocketsRef.current=new Set();
+            if(socketIdRef.current!==null){
+                ReactMativeUdpTurbo.close(socketIdRef.current);
+                socketIdRef.current=null;
+            }
+
+            probeSocketsRef.current.forEach((s)=>s.close());
+            probeSocketsRef.current=new Set();
         };
     },[]);
 
     return {discoveredDevices,isScanning,startScan};
+
 }
