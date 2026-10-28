@@ -1,6 +1,7 @@
 import {useCallback,useEffect,useRef,useState} from "react";
 import ReactMativeUdpTurbo from "react-native-udp-turbo";
 import {Buffer} from "buffer";
+import {getOrCreateWebSocketClient,WebSocketClientInterface} from "@mattermost/react-native-network-client";
 import {Device} from "../components/general/DeviceBar";
 import {SAMSUNG_WS_PORT,SAMSUNG_WS_PATH,PROBE_TIMEOUT_MS} from "../constants/network";
 import {getTVToken} from "../services/StorageService";
@@ -25,7 +26,7 @@ export default function useDiscovery(){
     const socketIdRef=useRef<number | null>(null);
     const scanTimeoutRef=useRef<ReturnType<typeof setTimeout> | null>(null);
     const candidateIPsRef=useRef<Set<string>>(new Set());
-    const probeSocketsRef=useRef<Set<WebSocket>>(new Set());
+    const probeClientsRef=useRef<Set<WebSocketClientInterface>>(new Set());
     const mountedRef=useRef(true);
     const receivingRef=useRef(false);
 
@@ -33,7 +34,17 @@ export default function useDiscovery(){
         while(receivingRef.current){
             let base64Message:string;
             try{
-                base64Message=await ReactMativeUdpTurbo.receive(id);
+                base64Message=await Promise.race([
+                    ReactMativeUdpTurbo.receive(id),
+                    new Promise<never>((_,reject)=>{
+                        const checkAbort=setInterval(()=>{
+                            if(!receivingRef.current){
+                                clearInterval(checkAbort);
+                                reject(new Error("aborted"));
+                            }
+                        },200);
+                    }),
+                ]);
             }catch{
                 break;
             }
@@ -57,54 +68,83 @@ export default function useDiscovery(){
             token=null;
         }
 
+        const encodedName=base64Encode(APP_NAME);
+        const tokenParam=token ? `&token=${token}` : "";
+        const url=`wss://${ip}:${SAMSUNG_WS_PORT}/${SAMSUNG_WS_PATH}?name=${encodedName}${tokenParam}`;
+
+
         return new Promise<Device | null>((resolve)=>{
             let settled=false;
+            let client:WebSocketClientInterface | null=null;
+            let timeout:ReturnType<typeof setTimeout> | null=null;
+
+            const cleanup=()=>{
+                if(timeout){
+                    clearTimeout(timeout);
+                    timeout=null;
+                }
+                if(client){
+                    probeClientsRef.current.delete(client);
+                    client.invalidate().catch(()=>{});
+                    client=null;
+                }
+            };
+
             const settle=(result:Device | null)=>{
                 if(settled) return;
                 settled=true;
+                cleanup();
                 resolve(result);
             };
 
-            const encodedName=base64Encode(APP_NAME);
-            const tokenParam=token ? `&token=${token}` : "";
-            const url=`wss://${ip}:${SAMSUNG_WS_PORT}/${SAMSUNG_WS_PATH}?name=${encodedName}${tokenParam}`;
+            (async()=>{
+                try{
+                    const created=await getOrCreateWebSocketClient(url,{
+                        trustSelfSignedServerCertificate:true,
+                    });
+                    const newClient=created.client;
 
-            const socket=new WebSocket(url);
-            probeSocketsRef.current.add(socket);
+                    if(settled){
+                        newClient.invalidate().catch(()=>{});
+                        return;
+                    }
 
-            const cleanupSocket=()=>{
-                probeSocketsRef.current.delete(socket);
-                socket.close();
-            };
+                    client=newClient;
+                    probeClientsRef.current.add(newClient);
+                    console.log("Probe client created for",ip,"- fresh instance:",created.created);
 
-            const timeout=setTimeout(()=>{
-                cleanupSocket();
-                settle(null);
-            },PROBE_TIMEOUT_MS);
+                    newClient.onOpen(()=>{
+                        console.log("Probe succeeded for ",ip);
+                        settle({
+                            id:ip,
+                            name:`Samsung TV (${ip})`,
+                            brand:"samsung",
+                            ipAddress:ip,
+                        });
+                    });
 
-            socket.onopen=()=>{
-                clearTimeout(timeout);
-                cleanupSocket();
-                console.log("Probe succeeded for ",ip);
-                settle({
-                    id:ip,
-                    name:`Samsung TV (${ip})`,
-                    brand:"samsung",
-                    ipAddress:ip,
-                });
-            };
+                    newClient.onError((event)=>{
+                        console.log("Probe failed/errored for ",ip,"- message: ",event.message);
+                        settle(null);
+                    });
 
-            socket.onerror=(event:any)=>{
-                clearTimeout(timeout);
-                cleanupSocket();
-                console.log("Probe failed/errored for",ip,"— message:",event?.message);
-                settle(null);                
-            };
+                    newClient.onClientError((event)=>{
+                        console.log("Probe client error for ",ip,"- code: ",event.errorCode,"desc: ",event.errorDescription);
+                        settle(null);
+                    });
 
-            socket.onclose=(event:any)=>{
-                console.log("Probe socket closed for",ip,"— code:",event?.code,"reason:",event?.reason);
-            };
-            
+                    newClient.onClose(()=>{
+                        console.log("Probe socket closed for ",ip);
+                        settle(null);
+                    });
+
+                    timeout=setTimeout(()=>settle(null),PROBE_TIMEOUT_MS);
+                    newClient.open();
+                }catch(err){
+                    console.log("Probe setup threw for ",ip,": ",err);
+                    settle(null);
+                }
+            })();
         });
     },[]);
 
@@ -191,8 +231,8 @@ export default function useDiscovery(){
                 socketIdRef.current=null;
             }
 
-            probeSocketsRef.current.forEach((s)=>s.close());
-            probeSocketsRef.current=new Set();
+            probeClientsRef.current.forEach((c)=>c.invalidate().catch(()=>{}));
+            probeClientsRef.current=new Set();
         };
     },[]);
 
