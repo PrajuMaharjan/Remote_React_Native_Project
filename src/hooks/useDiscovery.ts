@@ -1,12 +1,13 @@
 import {useCallback,useEffect,useRef,useState} from "react";
 import ReactMativeUdpTurbo from "react-native-udp-turbo";
 import {Buffer} from "buffer";
-import {getOrCreateWebSocketClient,WebSocketClientInterface} from "@mattermost/react-native-network-client";
+import PinnedWebSocket from "../../modules/pinned-websocket";
 import {Device} from "../components/general/DeviceBar";
 import {SAMSUNG_WS_PORT,SAMSUNG_WS_PATH,PROBE_TIMEOUT_MS} from "../constants/network";
 import {getTVToken} from "../services/StorageService";
 import {base64Encode} from "../utils/base64";
 import {APP_NAME} from "../config/appConfig";
+import { brand } from "expo-device";
 
 const SSDP_MULTICAST_ADDRESS="239.255.255.250";
 const SSDP_MULTICAST_PORT=1900;
@@ -26,7 +27,7 @@ export default function useDiscovery(){
     const socketIdRef=useRef<number | null>(null);
     const scanTimeoutRef=useRef<ReturnType<typeof setTimeout> | null>(null);
     const candidateIPsRef=useRef<Set<string>>(new Set());
-    const probeClientsRef=useRef<Set<WebSocketClientInterface>>(new Set());
+    const probeSocketsRef=useRef<Set<PinnedWebSocket>>(new Set());
     const mountedRef=useRef(true);
     const receivingRef=useRef(false);
 
@@ -75,7 +76,7 @@ export default function useDiscovery(){
 
         return new Promise<Device | null>((resolve)=>{
             let settled=false;
-            let client:WebSocketClientInterface | null=null;
+            let socket:PinnedWebSocket | null=null;
             let timeout:ReturnType<typeof setTimeout> | null=null;
 
             const cleanup=()=>{
@@ -83,10 +84,10 @@ export default function useDiscovery(){
                     clearTimeout(timeout);
                     timeout=null;
                 }
-                if(client){
-                    probeClientsRef.current.delete(client);
-                    client.invalidate().catch(()=>{});
-                    client=null;
+                if(socket){
+                    probeSocketsRef.current.delete(socket);
+                    socket.close();
+                    socket=null;
                 }
             };
 
@@ -97,54 +98,37 @@ export default function useDiscovery(){
                 resolve(result);
             };
 
-            (async()=>{
-                try{
-                    const created=await getOrCreateWebSocketClient(url,{
-                        trustSelfSignedServerCertificate:true,
-                    });
-                    const newClient=created.client;
+            try{
+                socket = new PinnedWebSocket(url);
+            }catch(err){
+                console.log("Probe setup threw for ",ip,":",err);
+                settle(null);
+                return;
+            }
 
-                    if(settled){
-                        newClient.invalidate().catch(()=>{});
-                        return;
-                    }
+            probeSocketsRef.current.add(socket);
+            timeout=setTimeout(()=>settle(null),PROBE_TIMEOUT_MS);
 
-                    client=newClient;
-                    probeClientsRef.current.add(newClient);
-                    console.log("Probe client created for",ip,"- fresh instance:",created.created);
+            socket.onopen=()=>{
+                console.log("Probe succeeded for ",ip);
+                settle({
+                    id:ip,
+                    name:`Samsung TV (${ip})`,
+                    brand:"samsung",
+                    ipAddress:ip,
+                });
+            };
 
-                    newClient.onOpen(()=>{
-                        console.log("Probe succeeded for ",ip);
-                        settle({
-                            id:ip,
-                            name:`Samsung TV (${ip})`,
-                            brand:"samsung",
-                            ipAddress:ip,
-                        });
-                    });
+            socket.onerror=(event)=>{
+                console.log("Probe failed/errored for ",ip,"- message: ",event.message);
+                settle(null);
+            };
 
-                    newClient.onError((event)=>{
-                        console.log("Probe failed/errored for ",ip,"- message: ",event.message);
-                        settle(null);
-                    });
+            socket.onclose=(event)=>{
+                console.log("Probe socket closed for ",ip,"- code: ",event.code,"reason: ",event.reason);
+                settle(null);
+            };
 
-                    newClient.onClientError((event)=>{
-                        console.log("Probe client error for ",ip,"- code: ",event.errorCode,"desc: ",event.errorDescription);
-                        settle(null);
-                    });
-
-                    newClient.onClose(()=>{
-                        console.log("Probe socket closed for ",ip);
-                        settle(null);
-                    });
-
-                    timeout=setTimeout(()=>settle(null),PROBE_TIMEOUT_MS);
-                    newClient.open();
-                }catch(err){
-                    console.log("Probe setup threw for ",ip,": ",err);
-                    settle(null);
-                }
-            })();
         });
     },[]);
 
@@ -231,8 +215,8 @@ export default function useDiscovery(){
                 socketIdRef.current=null;
             }
 
-            probeClientsRef.current.forEach((c)=>c.invalidate().catch(()=>{}));
-            probeClientsRef.current=new Set();
+            probeSocketsRef.current.forEach((s)=>s.close());
+            probeSocketsRef.current=new Set();
         };
     },[]);
 
