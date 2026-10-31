@@ -7,7 +7,6 @@ import {SAMSUNG_WS_PORT,SAMSUNG_WS_PATH,PROBE_TIMEOUT_MS} from "../constants/net
 import {getTVToken} from "../services/StorageService";
 import {base64Encode} from "../utils/base64";
 import {APP_NAME} from "../config/appConfig";
-import { brand } from "expo-device";
 
 const SSDP_MULTICAST_ADDRESS="239.255.255.250";
 const SSDP_MULTICAST_PORT=1900;

@@ -1,5 +1,6 @@
 import {SAMSUNG_WS_PORT,SAMSUNG_WS_PATH,CONNECTION_TIMEOUT_MS,RECONNECT_DELAY_MS,RECONNECT_RETRY_COUNT} from "../constants/network";
 import {SamsungCommand} from "./SamsungCommands";
+import PinnedWebSocket from "../../modules/pinned-websocket";
 import {base64Encode} from "../utils/base64";
 
 export type SamsungWSServiceOptions={
@@ -17,7 +18,7 @@ export type SamsungWSServiceEvents={
 
 export default class SansungWSService{
 
-    private ws : WebSocket | null = null;
+    private ws : PinnedWebSocket | null = null;
     private options : SamsungWSServiceOptions;
     private events : SamsungWSServiceEvents;
     private reconnectAttempts = 0;
@@ -39,7 +40,7 @@ export default class SansungWSService{
         this.manuallyDisconnect=false;
 
         return new Promise((resolve,reject)=>{
-            const socket=new WebSocket(this.buildURL());
+            const socket=new PinnedWebSocket(this.buildURL());
             this.ws=socket;
 
             const timeout=setTimeout(()=>{
@@ -71,13 +72,15 @@ export default class SansungWSService{
                 }
             };
 
-            socket.onerror=()=>{
+            socket.onerror=(event)=>{
+                console.log("TV Websocket error: ",event.message);
                 clearTimeout(timeout);
                 this.events.onError?.("WebSocket connection error");
                 reject(new Error("WebSocket connection error"));
             };
 
-            socket.onclose=()=>{
+            socket.onclose=(event)=>{
+                console.log("TV Websocket closed - code:",event.code,"reason: ",event.reason);
                 clearTimeout(timeout);
                 this.events.onDisconnect?.();
                 this.ws=null;
@@ -97,7 +100,7 @@ export default class SansungWSService{
     }
 
     sendKey(command:SamsungCommand):void{
-        if(!this.ws || this.ws.readyState !== WebSocket.OPEN){
+        if(!this.ws || this.ws.readyState !== PinnedWebSocket.OPEN){
             this.events.onError?.("Cannot send key - not connected to TV");
             return
         }
