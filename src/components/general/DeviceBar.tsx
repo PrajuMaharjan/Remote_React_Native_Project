@@ -12,11 +12,15 @@ export type Device={
 type DeviceBarProps={
     device:Device;
     onPress:(device:Device)=>void;
+    disabled?:boolean;
 };
 
-export default function DeviceBar({device,onPress}:DeviceBarProps){
+export default function DeviceBar({device,onPress,disabled=false}:DeviceBarProps){
     return(
-        <Pressable style={({pressed})=>[styles.bar,pressed && styles.barPressed]} onPress={()=>onPress(device)}>
+        <Pressable  style={({pressed})=>[styles.bar,pressed && styles.barPressed,disabled && styles.barDisabled]}
+                    onPress={()=>onPress(device)}
+                    disabled={disabled}
+        >
             <BrandLogo brand={device.brand} />
 
             <View style={styles.info}>
@@ -56,6 +60,9 @@ const styles=StyleSheet.create({
     barPressed:{
         backgroundColor:"#1a1a2e",
         borderColor:"rgba(124,111,255,0.4)",
+    },
+    barDisabled:{
+        opacity:0.5,
     },
     info:{
         flex:1,

@@ -43,7 +43,12 @@ export default class SansungWSService{
             const socket=new PinnedWebSocket(this.buildURL());
             this.ws=socket;
 
+            let established=false;
+            let timeOut=false;
+            let failed=false;
+
             const timeout=setTimeout(()=>{
+                timeOut=true;
                 socket.close();
                 reject(new Error("Connection to TV timed out."));
             }, CONNECTION_TIMEOUT_MS);
@@ -54,6 +59,7 @@ export default class SansungWSService{
 
                     if(message.event==="ms.channel.connect"){
                         clearTimeout(timeout);
+                        established=true;
                         this.reconnectAttempts=0;
 
                         if(message.data?.token){
@@ -75,6 +81,8 @@ export default class SansungWSService{
             socket.onerror=(event)=>{
                 console.log("TV Websocket error: ",event.message);
                 clearTimeout(timeout);
+                if(timeOut) return;
+                if(!established) failed=true;
                 this.events.onError?.("WebSocket connection error");
                 reject(new Error("WebSocket connection error"));
             };
@@ -83,11 +91,14 @@ export default class SansungWSService{
                 console.log("TV Websocket closed - code:",event.code,"reason: ",event.reason);
                 clearTimeout(timeout);
                 this.events.onDisconnect?.();
-                this.ws=null;
+                if(this.ws===socket) this.ws=null;
 
-                if(!this.manuallyDisconnect && this.reconnectAttempts < RECONNECT_RETRY_COUNT){
+                if(failed && !this.manuallyDisconnect && this.reconnectAttempts < RECONNECT_RETRY_COUNT){
                     this.reconnectAttempts++;
-                    setTimeout(()=>this.connect().catch(()=>{}),RECONNECT_DELAY_MS);
+                    setTimeout(()=>{
+                        if(this.manuallyDisconnect) return;
+                        this.connect().catch(()=>{});
+                    },RECONNECT_DELAY_MS);
                 }
             };
         });

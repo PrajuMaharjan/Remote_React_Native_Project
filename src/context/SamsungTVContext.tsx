@@ -17,7 +17,6 @@ export const SamsungTVContext=createContext<SamsungTVContextValue | null>(null);
 
 export function SamsungTVProvider({children} : {children:React.ReactNode}){
     const serviceRef=useRef<SamsungWSService | null>(null);
-    const currentDeviceIdRef=useRef<string | null>(null);
     
     const [isConnected,setIsConnected]=useState(false);
     const [lastError,setLastError]=useState<string | null>(null);
@@ -29,23 +28,35 @@ export function SamsungTVProvider({children} : {children:React.ReactNode}){
             throw new Error(message);
         }
         setLastError(null);
-        currentDeviceIdRef.current=device.id;
         
         // Only one device can/should be connected at one time
         serviceRef.current?.disconnect();
+        setIsConnected(false);
 
         const existingToken=await getTVToken(device.id);
 
-        const service=new SamsungWSService(
+        const service:SamsungWSService = new SamsungWSService(
             {ip:device.ipAddress,appName:APP_NAME,token:existingToken ?? undefined},
+            
             {
-                onConnect:()=>setIsConnected(true),
-                onDisconnect:()=>setIsConnected(false),
-                onError:(message)=>setLastError(message),
+
+                onConnect:()=>{
+                    if(serviceRef.current !== service) return;
+                    setIsConnected(true);
+                },
+                
+                onDisconnect:()=>{
+                    if(serviceRef.current !== service) return;
+                    setIsConnected(false);
+                },
+                
+                onError:(message)=>{
+                    if(serviceRef.current !== service) return;
+                    setLastError(message);
+                },
+
                 onToken:(token)=>{
-                    if(currentDeviceIdRef.current){
-                        saveTVToken(currentDeviceIdRef.current,token).catch(()=>{});
-                    }
+                    saveTVToken(device.id,token).catch(()=>{});
                 },
             }
         );
@@ -56,7 +67,7 @@ export function SamsungTVProvider({children} : {children:React.ReactNode}){
             await service.connect();
         }catch(err){
             const message=err instanceof Error ? err.message : "Failed to connect to TV"
-            setLastError(message);
+            if(serviceRef.current===service) setLastError(message);
             throw err instanceof Error ? err : new Error(message);
         }
     },[]);
