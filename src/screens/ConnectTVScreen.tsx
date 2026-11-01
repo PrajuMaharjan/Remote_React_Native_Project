@@ -1,3 +1,4 @@
+import { useRef,useState } from "react";
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert, TouchableOpacity } from "react-native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
@@ -18,7 +19,14 @@ export default function ConnectTVScreen({ navigation }: ConnectTVScreenProps) {
   const {pairedDevices,saveDevice}=useTVStorage();
   const {discoveredDevices,isScanning,startScan}=useDiscovery();
 
+  const connectingRef=useRef(false);
+  const [isConnecting,setIsConnecting]=useState(false);
+
   const handleDevicePress=async (device:Device)=>{
+    if(connectingRef.current) return;
+    connectingRef.current=true;
+    setIsConnecting(false);
+    
     try{
       await connect(device);
       await saveDevice(device);
@@ -27,6 +35,9 @@ export default function ConnectTVScreen({ navigation }: ConnectTVScreenProps) {
       Alert.alert("Connection failed",
         err instanceof Error ? err.message : "Could not connect to this TV."
       );
+    }finally{
+      connectingRef.current=false;
+      setIsConnecting(false);
     }
   };
 
@@ -65,7 +76,7 @@ export default function ConnectTVScreen({ navigation }: ConnectTVScreenProps) {
 
         {discoveredDevices.length>0 ? (
           discoveredDevices.map((device)=>(
-            <DeviceBar key={device.id} device={device} onPress={handleDevicePress} />
+            <DeviceBar key={device.id} device={device} onPress={handleDevicePress} disabled={isConnecting} />
           ))
         ) : (
           <Text style={styles.emptyText}>
