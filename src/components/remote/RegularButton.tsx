@@ -1,7 +1,8 @@
+import {ReactNode} from "react";
 import {TouchableOpacity,Text,StyleSheet,ViewStyle} from "react-native";
 
 type RegularButtonProps={
-    icon:string;
+    icon:string | ReactNode;
     label:string;
     onPress:()=>void;
     style?:ViewStyle;
@@ -10,7 +11,7 @@ type RegularButtonProps={
 export default function RegularButton({icon,label,onPress,style}:RegularButtonProps){
     return(
         <TouchableOpacity style={[styles.button,style]} onPress={onPress} activeOpacity={0.7}>
-            <Text style={styles.icon}>{icon}</Text>
+            {typeof icon==="string" ? <Text style={styles.icon}>{icon}</Text> : icon}
             <Text style={styles.label}>{label}</Text>
         </TouchableOpacity>
     );

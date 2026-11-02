@@ -1,4 +1,5 @@
 import {View,TouchableOpacity,Text,StyleSheet} from "react-native";
+import {Ionicons} from "@expo/vector-icons";
 
 type DPadProps={
     onUp:()=>void;
@@ -11,6 +12,8 @@ type DPadProps={
 const WHEEL_SIZE=200;
 const SEGMENT_SIZE=WHEEL_SIZE/2;
 const OK_SIZE=68;
+const ARROW_SIZE=24;
+const ARROW_COLOR="#e0dff5";
 
 export default function DPad({onUp,onDown,onLeft,onRight,onOk}:DPadProps){
     return(
@@ -23,28 +26,28 @@ export default function DPad({onUp,onDown,onLeft,onRight,onOk}:DPadProps){
                     {/* Up button */}
                     <TouchableOpacity style={[styles.segment,styles.segmentUp]} onPress={onUp} activeOpacity={0.7}>
                         <View style={styles.counterRotate}>
-                            <Text style={styles.arrow}>▲</Text>
+                            <Ionicons name="caret-up" size={ARROW_SIZE} color={ARROW_COLOR} />
                         </View>
                     </TouchableOpacity>
 
                     {/* Right button */}
                     <TouchableOpacity style={[styles.segment,styles.segmentRight]} onPress={onRight} activeOpacity={0.7}>
                         <View style={styles.counterRotate}> 
-                            <Text style={styles.arrow}>▶</Text>
+                            <Ionicons name="caret-forward" size={ARROW_SIZE} color={ARROW_COLOR} />
                         </View>
                     </TouchableOpacity>
 
                     {/* Left button */}
                     <TouchableOpacity style={[styles.segment,styles.segmentLeft]} onPress={onLeft} activeOpacity={0.7}>
                         <View style={styles.counterRotate}> 
-                            <Text style={styles.arrow}>◀</Text>
+                            <Ionicons name="caret-back" size={ARROW_SIZE} color={ARROW_COLOR} />
                         </View>
                     </TouchableOpacity>
 
                     {/* Down Button */}
                     <TouchableOpacity style={[styles.segment,styles.segmentDown]} onPress={onDown} activeOpacity={0.7}>
                         <View style={styles.counterRotate}> 
-                            <Text style={styles.arrow}>▼</Text>
+                            <Ionicons name="caret-down" size={ARROW_SIZE} color={ARROW_COLOR} />
                         </View>
                     </TouchableOpacity>
 
@@ -115,10 +118,6 @@ const styles=StyleSheet.create({
     },
     counterRotate:{
         transform:[{rotate:"-45deg"}],
-    },
-    arrow:{
-        fontSize:20,
-        color:'#e0dff5',
     },
     okButton:{
         position:"absolute",

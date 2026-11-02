@@ -1,4 +1,4 @@
-import React,{useState} from "react";
+import {useState} from "react";
 import { View, StyleSheet, ScrollView } from "react-native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
@@ -12,8 +12,12 @@ import LongButton from "../components/remote/LongButton";
 import RegularButton from "../components/remote/RegularButton";
 import ColorButton from "../components/remote/ColoredButton";
 
+import {Ionicons,MaterialIcons,MaterialCommunityIcons} from "@expo/vector-icons";
 import useSamsungTV from "../hooks/useSamsungTV";
 import { SamsungCommands } from "@/services/SamsungCommands";
+
+const ICON_SIZE=22;
+const ICON_COLOR="#e0dff5";
 
 type RemoteScreenProps = {
     navigation: NativeStackNavigationProp<RootStackParamList, "Remote">;
@@ -24,6 +28,12 @@ export default function RemoteScreen({ navigation }: RemoteScreenProps) {
     const [isKeyboardMode,setIsKeyboardMode]=useState(false);
     const [typedtext,setTypedText]=useState("");
     const {sendKey}=useSamsungTV();
+    const [isPlaying,setIsPlaying]=useState(true);
+
+    const handlePlayPause=()=>{
+        sendKey(isPlaying ? SamsungCommands.PAUSE : SamsungCommands.PLAY);
+        setIsPlaying(!isPlaying);
+    };
 
     return (
         <View style={styles.container}>
@@ -108,11 +118,11 @@ export default function RemoteScreen({ navigation }: RemoteScreenProps) {
                             
                             {/* Back and Pause buttons */}
                             <View style={styles.gridColumn}>
-                                <RegularButton  icon="⏸"
-                                                label="Pause"
-                                                onPress={()=>sendKey(SamsungCommands.PAUSE)}
+                                <RegularButton  icon={<MaterialCommunityIcons name="play-pause" size={ICON_SIZE} color={ICON_COLOR} />}
+                                                label="Play/Pause"
+                                                onPress={handlePlayPause}
                                 />
-                                <RegularButton  icon="↩"
+                                <RegularButton  icon={<Ionicons name="return-up-back" size={ICON_SIZE} color={ICON_COLOR} />}
                                                 label="Back"
                                                 onPress={()=>sendKey(SamsungCommands.BACK)}
                                 />
@@ -153,21 +163,21 @@ export default function RemoteScreen({ navigation }: RemoteScreenProps) {
                 
                 {/* Row 4 : Playback Controls */}
                 <View style={styles.row}>
-                    <RegularButton  icon="⏮"
+                    <RegularButton  icon={<Ionicons name="play-skip-back" size={ICON_SIZE} color={ICON_COLOR} />}
                                     label="Skip backward"
-                                    onPress={()=>console.log("Skip Back - not supported")}
+                                    onPress={()=>sendKey(SamsungCommands.SKIP_BACKWARD)}
                     />
-                    <RegularButton  icon="⏪"
-                                    label="Rewind"
-                                    onPress={()=>sendKey(SamsungCommands.REWIND)}
+                    <RegularButton  icon={<MaterialIcons name="fast-rewind" size={ICON_SIZE} color={ICON_COLOR} />}
+                                    label="Speed -"
+                                    onPress={()=>sendKey(SamsungCommands.SPEED_DOWN)}
                     />
-                    <RegularButton  icon="⏩"
-                                    label="Fast Forward"
-                                    onPress={()=>sendKey(SamsungCommands.FAST_FORWARD)}
+                    <RegularButton  icon={<MaterialIcons name="fast-forward" size={ICON_SIZE} color={ICON_COLOR} />}
+                                    label="Speed +"
+                                    onPress={()=>sendKey(SamsungCommands.SPEED_UP)}
                     />
-                    <RegularButton  icon="⏭"
+                    <RegularButton  icon={<Ionicons name="play-skip-forward" size={ICON_SIZE} color={ICON_COLOR} />}
                                     label="Skip forward"
-                                    onPress={()=>console.log("Skip Forward - not supported")}
+                                    onPress={()=>sendKey(SamsungCommands.SKIP_FORWARD)}
                     />
                 </View>
 

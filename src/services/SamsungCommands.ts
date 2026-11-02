@@ -23,8 +23,10 @@ export const SamsungCommands={
 
     PLAY:"KEY_PLAY",
     PAUSE:"KEY_PAUSE",
-    REWIND:"KEY_REWIND",
-    FAST_FORWARD:"KEY_FF",
+    SKIP_BACKWARD:"KEY_REWIND",
+    SKIP_FORWARD:"KEY_FF",
+    SPEED_DOWN:"KEY_REWIND_",
+    SPEED_UP:"KEY_FF_",
 
     RED:"KEY_RED",
     GREEN:"KEY_GREEN",
