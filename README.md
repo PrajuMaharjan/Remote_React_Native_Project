@@ -48,7 +48,6 @@ Before running the app, make sure you have:
 - Node.js 20+ recommended
 - npm or yarn
 - Android Studio / Android emulator, or a physical Android device
-- iOS simulator if developing on macOS
 - A Samsung TV connected to the same Wi‑Fi network as your phone
 
 ## Installation
