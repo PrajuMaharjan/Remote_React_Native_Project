@@ -1,4 +1,4 @@
-import {Pressable,View,Text,StyleSheet} from "react-native";
+import {Pressable,View,Text,StyleSheet,ActivityIndicator} from "react-native";
 import {Ionicons} from "@expo/vector-icons";
 import BrandLogo,{Brand} from "./BrandLogo";
 
@@ -13,11 +13,12 @@ type DeviceBarProps={
     device:Device;
     onPress:(device:Device)=>void;
     disabled?:boolean;
+    isConnecting?:boolean;
 };
 
-export default function DeviceBar({device,onPress,disabled=false}:DeviceBarProps){
+export default function DeviceBar({device,onPress,disabled=false,isConnecting=false}:DeviceBarProps){
     return(
-        <Pressable  style={({pressed})=>[styles.bar,pressed && styles.barPressed,disabled && styles.barDisabled]}
+        <Pressable  style={({pressed})=>[styles.bar,pressed && styles.barPressed,disabled && !isConnecting && styles.barDisabled,isConnecting && styles.barConnecting]}
                     onPress={()=>onPress(device)}
                     disabled={disabled}
         >
@@ -28,9 +29,19 @@ export default function DeviceBar({device,onPress,disabled=false}:DeviceBarProps
                 {device.ipAddress &&(
                     <Text style={styles.ip}>{device.ipAddress}</Text>
                 )}
+                {/* Status line while connecting. First-time pairing waits on the TV's prompt */}
+                {isConnecting &&(
+                    <Text style={styles.status}>Connecting... approve on the TV if asked</Text>
+                )}
             </View>
+            
+            {/* Spinner while connecting */}
+            {isConnecting ? (
+                <ActivityIndicator size="small" color="#a78bfa" />
+            ) : (
+                <Ionicons name="chevron-forward" size={18} color="#444" />
+            )}
 
-            <Ionicons name="chevron-forward" size={18} color="#444" />
         </Pressable>
     );
 }
@@ -63,6 +74,13 @@ const styles=StyleSheet.create({
     },
     barDisabled:{
         opacity:0.5,
+    },
+    barConnecting:{
+        borderColor:"rgba(124,111,255,0.4)",
+    },
+    status:{
+        color:"#a78bfa",
+        fontSize:12,
     },
     info:{
         flex:1,

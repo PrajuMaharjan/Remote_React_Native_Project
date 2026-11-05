@@ -20,12 +20,12 @@ export default function ConnectTVScreen({ navigation }: ConnectTVScreenProps) {
   const {discoveredDevices,isScanning,startScan}=useDiscovery();
 
   const connectingRef=useRef(false);
-  const [isConnecting,setIsConnecting]=useState(false);
+  const [connectingId,setConnectingId]=useState<string | null>(null);
 
   const handleDevicePress=async (device:Device)=>{
     if(connectingRef.current) return;
     connectingRef.current=true;
-    setIsConnecting(false);
+    setConnectingId(device.id);
     
     try{
       await connect(device);
@@ -37,7 +37,7 @@ export default function ConnectTVScreen({ navigation }: ConnectTVScreenProps) {
       );
     }finally{
       connectingRef.current=false;
-      setIsConnecting(false);
+      setConnectingId(null);
     }
   };
 
@@ -54,7 +54,11 @@ export default function ConnectTVScreen({ navigation }: ConnectTVScreenProps) {
         <SectionHeader title="Previously Connected" />
         {pairedDevices.length>0 ? (
           pairedDevices.map((device)=>(
-            <DeviceBar key={device.id} device={device} onPress={handleDevicePress} />
+            <DeviceBar  key={device.id} 
+                        device={device}
+                        onPress={handleDevicePress}
+                        disabled={connectingId !== null}
+                        isConnecting={connectingId===device.id} />
           ))
         ) : (
           <Text style={styles.emptyText}>No devices found on this network</Text>
@@ -76,7 +80,12 @@ export default function ConnectTVScreen({ navigation }: ConnectTVScreenProps) {
 
         {discoveredDevices.length>0 ? (
           discoveredDevices.map((device)=>(
-            <DeviceBar key={device.id} device={device} onPress={handleDevicePress} disabled={isConnecting} />
+            <DeviceBar  key={device.id}
+                        device={device}
+                        onPress={handleDevicePress} 
+                        disabled={connectingId!==null}
+                        isConnecting={connectingId===device.id} 
+            />
           ))
         ) : (
           <Text style={styles.emptyText}>
