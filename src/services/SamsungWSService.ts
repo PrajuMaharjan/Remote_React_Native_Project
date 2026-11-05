@@ -37,11 +37,13 @@ export default class SansungWSService{
     }
 
     connect():Promise<void>{
+        console.log("TV connect() attempt at ",new Date().toISOString());
         this.manuallyDisconnect=false;
 
         return new Promise((resolve,reject)=>{
             const socket=new PinnedWebSocket(this.buildURL());
             this.ws=socket;
+            socket.onopen=()=>console.log("TV socket open");
 
             let established=false;
             let timeOut=false;
@@ -54,6 +56,7 @@ export default class SansungWSService{
             }, CONNECTION_TIMEOUT_MS);
 
             socket.onmessage=(event)=>{
+                console.log("TV message: ",String(event.data).replace(/"token":"[^"]*/g,'"token":"<redacted>"'));
                 try{
                     const message=JSON.parse(event.data);
 

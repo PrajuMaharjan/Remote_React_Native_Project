@@ -43,3 +43,8 @@ example
 /android
 
 .env
+
+# Ignore internal build lock and cache files
+modules/pinned-websocket/android/.gradle/9.8.1/fileHashes/fileHashes.lock
+modules/pinned-websocket/android/.gradle/buildOutputCleanup/buildOutputCleanup.lock
+modules/pinned-websocket/android/.gradle/buildOutputCleanup/cache.properties

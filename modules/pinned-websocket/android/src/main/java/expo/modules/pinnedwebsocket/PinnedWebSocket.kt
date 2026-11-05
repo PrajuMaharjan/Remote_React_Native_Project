@@ -8,6 +8,9 @@ import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import java.util.concurrent.ConcurrentHashMap
+import java.net.InetSocketAddress
+import java.net.Socket
+import javax.net.ssl.SSLSocket
 
 class PinnedWebSocketModule : Module() {
 
@@ -26,6 +29,27 @@ class PinnedWebSocketModule : Module() {
         // Mirrors native WebSocket: an error event, then a close with code 1006.
         sendEvent("onError", mapOf("id" to id, "message" to message))
         sendEvent("onClose", mapOf("id" to id, "code" to 1006, "reason" to message))
+    }
+    
+    // TLS handshake + identity check only. Sends no HTTP request, so the TV's pairing
+    // prompt (triggered by the WebSocket upgrade) is never reached.
+    private fun probeTls(host: String, port: Int, timeoutMs: Int): Boolean {
+        val raw = Socket()
+        try {
+            raw.connect(InetSocketAddress(host, port), timeoutMs)
+            raw.soTimeout = timeoutMs
+            val ssl = SamsungTrust.sslSocketFactory.createSocket(raw, host, port, true) as SSLSocket
+            try {
+                ssl.startHandshake() // throws unless the chain validates against the pinned Samsung root
+                return SamsungTrust.hostnameVerifier.verify(host, ssl.session) // exact CN check
+            } finally {
+                try { ssl.close() } catch (e: Exception) { }
+            }
+        } catch (e: Exception) {
+            return false
+        } finally {
+            try { raw.close() } catch (e: Exception) { }
+        }
     }
 
     private fun openSocket(id: Int, url: String) {
@@ -86,6 +110,11 @@ class PinnedWebSocketModule : Module() {
         Function("cancel") { id: Int ->
             sockets[id]?.cancel()
             Unit
+        }
+        
+        // Runs off the JS thread; resolves true only for a verified Samsung TLS endpoint
+        AsyncFunction("probeTls") { host: String, port: Int, timeoutMs: Int ->
+            probeTls(host, port, timeoutMs)
         }
 
         OnDestroy {

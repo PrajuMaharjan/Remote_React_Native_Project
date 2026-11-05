@@ -34,6 +34,12 @@ export default class PinnedWebSocket {
         });
     }
 
+    // True only if host:port completes TLS against Samsung's pinned root with the expected CN.
+    // Opens no WebSocket, so it cannot trigger the TV's pairing prompt.
+    static probeTls(host: string, port: number, timeoutMs: number): Promise<boolean> {
+        return PinnedWebSocketModule.probeTls(host, port, timeoutMs);
+    }
+
     readonly url: string;
     readyState: number = PinnedWebSocket.CONNECTING;
 

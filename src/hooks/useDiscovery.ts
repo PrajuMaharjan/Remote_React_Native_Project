@@ -3,10 +3,7 @@ import ReactMativeUdpTurbo from "react-native-udp-turbo";
 import {Buffer} from "buffer";
 import PinnedWebSocket from "../../modules/pinned-websocket";
 import {Device} from "../components/general/DeviceBar";
-import {SAMSUNG_WS_PORT,SAMSUNG_WS_PATH,PROBE_TIMEOUT_MS} from "../constants/network";
-import {getTVToken} from "../services/StorageService";
-import {base64Encode} from "../utils/base64";
-import {APP_NAME} from "../config/appConfig";
+import {SAMSUNG_WS_PORT,PROBE_TIMEOUT_MS} from "../constants/network";
 
 const SSDP_MULTICAST_ADDRESS="239.255.255.250";
 const SSDP_MULTICAST_PORT=1900;
@@ -26,7 +23,6 @@ export default function useDiscovery(){
     const socketIdRef=useRef<number | null>(null);
     const scanTimeoutRef=useRef<ReturnType<typeof setTimeout> | null>(null);
     const candidateIPsRef=useRef<Set<string>>(new Set());
-    const probeSocketsRef=useRef<Set<PinnedWebSocket>>(new Set());
     const mountedRef=useRef(true);
     const receivingRef=useRef(false);
 
@@ -60,75 +56,22 @@ export default function useDiscovery(){
     },[]);
 
     const probeTV=useCallback(async(ip:string) : Promise<Device | null>=>{
-        let token:string | null=null;
         
         try{
-            token=await getTVToken(ip);
-        }catch{
-            token=null;
+            const isSamsungTV = await PinnedWebSocket.probeTls(ip,SAMSUNG_WS_PORT,PROBE_TIMEOUT_MS);
+            console.log("Probe result for ",ip,": ",isSamsungTV);
+            if(!isSamsungTV) return null;
+
+            return {
+                id:ip,
+                name:`Samsung TV (${ip})`,
+                brand:"samsung",
+                ipAddress:ip,
+            };
+        }catch(err){
+            console.log("Probe threw for ",ip,": ",err);
+            return null;
         }
-
-        const encodedName=base64Encode(APP_NAME);
-        const tokenParam=token ? `&token=${token}` : "";
-        const url=`wss://${ip}:${SAMSUNG_WS_PORT}/${SAMSUNG_WS_PATH}?name=${encodedName}${tokenParam}`;
-
-
-        return new Promise<Device | null>((resolve)=>{
-            let settled=false;
-            let socket:PinnedWebSocket | null=null;
-            let timeout:ReturnType<typeof setTimeout> | null=null;
-
-            const cleanup=()=>{
-                if(timeout){
-                    clearTimeout(timeout);
-                    timeout=null;
-                }
-                if(socket){
-                    probeSocketsRef.current.delete(socket);
-                    socket.close();
-                    socket=null;
-                }
-            };
-
-            const settle=(result:Device | null)=>{
-                if(settled) return;
-                settled=true;
-                cleanup();
-                resolve(result);
-            };
-
-            try{
-                socket = new PinnedWebSocket(url);
-            }catch(err){
-                console.log("Probe setup threw for ",ip,":",err);
-                settle(null);
-                return;
-            }
-
-            probeSocketsRef.current.add(socket);
-            timeout=setTimeout(()=>settle(null),PROBE_TIMEOUT_MS);
-
-            socket.onopen=()=>{
-                console.log("Probe succeeded for ",ip);
-                settle({
-                    id:ip,
-                    name:`Samsung TV (${ip})`,
-                    brand:"samsung",
-                    ipAddress:ip,
-                });
-            };
-
-            socket.onerror=(event)=>{
-                console.log("Probe failed/errored for ",ip,"- message: ",event.message);
-                settle(null);
-            };
-
-            socket.onclose=(event)=>{
-                console.log("Probe socket closed for ",ip,"- code: ",event.code,"reason: ",event.reason);
-                settle(null);
-            };
-
-        });
     },[]);
 
     const finishSsdpAndProbe=useCallback(async() => {
@@ -163,6 +106,7 @@ export default function useDiscovery(){
     },[probeTV]);
 
     const startScan=useCallback(async()=>{
+        console.log("startScan called");
         setDiscoveredDevices([]); // Clear results from previous scans
         setIsScanning(true);
         candidateIPsRef.current=new Set();
@@ -214,8 +158,6 @@ export default function useDiscovery(){
                 socketIdRef.current=null;
             }
 
-            probeSocketsRef.current.forEach((s)=>s.close());
-            probeSocketsRef.current=new Set();
         };
     },[]);
 
