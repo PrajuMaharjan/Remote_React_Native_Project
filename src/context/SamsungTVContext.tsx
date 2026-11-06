@@ -11,6 +11,7 @@ type SamsungTVContextValue={
     connect:(device:Device)=>Promise<void>;
     disconnect:()=>void;
     sendKey:(command:SamsungCommand)=>void;
+    sendText:(text:string)=>ViewTransitionUpdateCallback;
 };
 
 export const SamsungTVContext=createContext<SamsungTVContextValue | null>(null);
@@ -82,9 +83,13 @@ export function SamsungTVProvider({children} : {children:React.ReactNode}){
         serviceRef.current?.sendKey(command);
     },[]);
 
+    const sendText=useCallback((text:string)=>{
+        serviceRef.current?.sendText(text);
+    },[]);
+
     const value=useMemo(
-        ()=>({isConnected,lastError,connect,disconnect,sendKey}),
-        [isConnected,lastError,connect,disconnect,sendKey]
+        ()=>({isConnected,lastError,connect,disconnect,sendKey,sendText}),
+        [isConnected,lastError,connect,disconnect,sendKey,sendText]
     );
 
     return <SamsungTVContext.Provider value={value}>{children}</SamsungTVContext.Provider>

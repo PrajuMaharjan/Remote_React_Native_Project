@@ -27,7 +27,7 @@ export default function RemoteScreen({ navigation }: RemoteScreenProps) {
     const [isMuted,setIsMuted]=useState(false);
     const [isKeyboardMode,setIsKeyboardMode]=useState(false);
     const [typedtext,setTypedText]=useState("");
-    const {sendKey}=useSamsungTV();
+    const {sendKey,sendText}=useSamsungTV();
     const [isPlaying,setIsPlaying]=useState(true);
 
     const handlePlayPause=()=>{
@@ -58,7 +58,10 @@ export default function RemoteScreen({ navigation }: RemoteScreenProps) {
                     {isKeyboardMode ? (
                         <View style={styles.keyboardSection}>
                             <TextDisplay    value={typedtext}
-                                            onChangeText={setTypedText}
+                                            onChangeText={(text)=>{
+                                                setTypedText(text);
+                                                sendText(text);
+                                            }}
                             />
                         </View>
                     ) : (
