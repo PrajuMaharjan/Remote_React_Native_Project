@@ -5,9 +5,7 @@ import { RootStackParamList } from "../navigation/types";
 
 import BackButton from "../components/general/BackButton";
 import PowerButton from "../components/remote/PowerButton";
-import ModeToggle from "../components/remote/ModeToggle";
 import DPad from "../components/remote/DPad";
-import TextDisplay from "../components/remote/TextDisplay";
 import LongButton from "../components/remote/LongButton";
 import RegularButton from "../components/remote/RegularButton";
 import ColorButton from "../components/remote/ColoredButton";
@@ -25,9 +23,7 @@ type RemoteScreenProps = {
 
 export default function RemoteScreen({ navigation }: RemoteScreenProps) {
     const [isMuted,setIsMuted]=useState(false);
-    const [isKeyboardMode,setIsKeyboardMode]=useState(false);
-    const [typedtext,setTypedText]=useState("");
-    const {sendKey,sendText}=useSamsungTV();
+    const {sendKey}=useSamsungTV();
     const [isPlaying,setIsPlaying]=useState(true);
 
     const handlePlayPause=()=>{
@@ -44,36 +40,22 @@ export default function RemoteScreen({ navigation }: RemoteScreenProps) {
 
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
-                {/* Row 1 : Power + Mode Toggle */}
+                {/* Row 1 : Power */}
                 <View style={styles.row}>
                     <PowerButton onPress={()=>sendKey(SamsungCommands.POWER)} />
-                    <ModeToggle isKeyboardMode={isKeyboardMode}
-                                onToggle={()=>setIsKeyboardMode(!isKeyboardMode)}
-                    />
                 </View>
 
                 {/* Wrapping the input area in a fixed height container so that nothing below it shifts position */}
                 <View style={styles.inputArea}>
-                    {/* Row 2 : DPad or Keyboard */}
-                    {isKeyboardMode ? (
-                        <View style={styles.keyboardSection}>
-                            <TextDisplay    value={typedtext}
-                                            onChangeText={(text)=>{
-                                                setTypedText(text);
-                                                sendText(text);
-                                            }}
-                            />
-                        </View>
-                    ) : (
-                        <View style={styles.centeredRow}>
-                            <DPad   onUp={()=>sendKey(SamsungCommands.UP)}
-                                    onDown={()=>sendKey(SamsungCommands.DOWN)}
-                                    onLeft={()=>sendKey(SamsungCommands.LEFT)}
-                                    onRight={()=>sendKey(SamsungCommands.RIGHT)}
-                                    onOk={()=>sendKey(SamsungCommands.OK)}
-                            />
-                        </View>
-                    )}
+                    {/* Row 2 : DPad */}
+                    <View style={styles.centeredRow}>
+                        <DPad   onUp={()=>sendKey(SamsungCommands.UP)}
+                                onDown={()=>sendKey(SamsungCommands.DOWN)}
+                                onLeft={()=>sendKey(SamsungCommands.LEFT)}
+                                onRight={()=>sendKey(SamsungCommands.RIGHT)}
+                                onOk={()=>sendKey(SamsungCommands.OK)}
+                        />
+                    </View>
                 </View>
 
                 {/* Row 5 : Source  and Menu*/}
@@ -213,10 +195,6 @@ const styles = StyleSheet.create({
     },
     centeredRow: {
         alignItems: "center",
-    },
-    keyboardSection: {
-        gap: 12,
-        width: "100%",
     },
     inputArea:{
         height:200,

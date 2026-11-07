@@ -1,7 +1,6 @@
 import {SAMSUNG_WS_PORT,SAMSUNG_WS_PATH,CONNECTION_TIMEOUT_MS,RECONNECT_DELAY_MS,RECONNECT_RETRY_COUNT} from "../constants/network";
 import {SamsungCommand} from "./SamsungCommands";
 import PinnedWebSocket from "../../modules/pinned-websocket";
-import {Buffer} from "buffer";
 import {base64Encode} from "../utils/base64";
 
 export type SamsungWSServiceOptions={
@@ -127,22 +126,6 @@ export default class SansungWSService{
                 DataOfCmd:command,
                 Option:"false",
                 TypeOfRemote:"SendRemoteKey",
-            },
-        }));
-    }
-
-    sendText(text:string) : void{
-        if(!this.ws || this.ws.readyState !== PinnedWebSocket.OPEN){
-            this.events.onError?.("Cannot send text - not connected to TV");
-            return;
-        }
-
-        this.ws.send(JSON.stringify({
-            method:"ms.remote.control",
-            params:{
-                Cmd:Buffer.from(text,"utf8").toString("base64"),
-                DataOfCmd:"base64",
-                TypeOfRemote:"SendInputKey",
             },
         }));
     }
