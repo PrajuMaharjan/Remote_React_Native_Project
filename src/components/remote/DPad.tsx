@@ -1,5 +1,6 @@
 import {View,TouchableOpacity,Text,StyleSheet} from "react-native";
 import {Ionicons} from "@expo/vector-icons";
+import {LONG_PRESS_OK_MS} from "../../constants/remote";
 
 type DPadProps={
     onUp:()=>void;
@@ -7,6 +8,7 @@ type DPadProps={
     onLeft:()=>void;
     onRight:()=>void;
     onOk:()=>void;
+    onOKLongPress:()=>void;
 };
 
 const WHEEL_SIZE=200;
@@ -15,7 +17,7 @@ const OK_SIZE=68;
 const ARROW_SIZE=24;
 const ARROW_COLOR="#e0dff5";
 
-export default function DPad({onUp,onDown,onLeft,onRight,onOk}:DPadProps){
+export default function DPad({onUp,onDown,onLeft,onRight,onOk,onOKLongPress}:DPadProps){
     return(
         <View style={styles.container}>            
 
@@ -54,7 +56,7 @@ export default function DPad({onUp,onDown,onLeft,onRight,onOk}:DPadProps){
                 </View>
 
                 {/* Ok Button */}
-                <TouchableOpacity style={styles.okButton} onPress={onOk} activeOpacity={0.7}>
+                <TouchableOpacity style={styles.okButton} onPress={onOk} onLongPress={onOKLongPress} delayLongPress={LONG_PRESS_OK_MS} activeOpacity={0.7}>
                     <Text style={styles.okLabel}>OK</Text>
                 </TouchableOpacity>
         

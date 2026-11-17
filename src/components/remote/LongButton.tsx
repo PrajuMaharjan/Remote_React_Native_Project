@@ -6,19 +6,23 @@ type LongButtonProps={
     centerLabel:string
     onTopPress:()=>void;
     onBottomPress:()=>void;
+    onTopLongPress?:()=>void;
+    onBottomLongPress?:()=>void;
+    onLongPressEnd?:()=>void;
+    delayLongPress?:number;
 };
 
-export default function LongButton({topIcon,bottomIcon,centerLabel,onTopPress,onBottomPress}:LongButtonProps){
+export default function LongButton({topIcon,bottomIcon,centerLabel,onTopPress,onBottomPress,onTopLongPress,onBottomLongPress,onLongPressEnd,delayLongPress}:LongButtonProps){
     return(
         <View style={styles.container}>
             
-            <TouchableOpacity style={styles.half} onPress={onTopPress} activeOpacity={0.7}>
+            <TouchableOpacity style={styles.half} onPress={onTopPress} onLongPress={onTopLongPress} onPressOut={onLongPressEnd} delayLongPress={delayLongPress} activeOpacity={0.7}>
                 <Text style={styles.icon}>{topIcon}</Text>
             </TouchableOpacity>
 
             <Text style={styles.centerLabel}>{centerLabel}</Text>
 
-            <TouchableOpacity style={styles.half} onPress={onBottomPress} activeOpacity={0.7}>
+            <TouchableOpacity style={styles.half} onPress={onBottomPress} onLongPress={onBottomLongPress} onPressOut={onLongPressEnd} delayLongPress={delayLongPress} activeOpacity={0.7}>
                 <Text style={styles.icon}>{bottomIcon}</Text>
             </TouchableOpacity>
         </View>

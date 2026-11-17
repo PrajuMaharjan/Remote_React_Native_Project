@@ -13,6 +13,8 @@ import ColorButton from "../components/remote/ColoredButton";
 import {Ionicons,MaterialIcons,MaterialCommunityIcons} from "@expo/vector-icons";
 import useSamsungTV from "../hooks/useSamsungTV";
 import { SamsungCommands } from "@/services/SamsungCommands";
+import useHoldKey from "../hooks/useHoldKey";
+import {LONG_PRESS_VOLUME_MS,OK_HOLD_MS,MAX_HOLD_MS} from "../constants/remote";
 
 const ICON_SIZE=22;
 const ICON_COLOR="#e0dff5";
@@ -24,6 +26,7 @@ type RemoteScreenProps = {
 export default function RemoteScreen({ navigation }: RemoteScreenProps) {
     const [isMuted,setIsMuted]=useState(false);
     const {sendKey}=useSamsungTV();
+    const {startHold,endHold}=useHoldKey();
     const [isPlaying,setIsPlaying]=useState(true);
 
     const handlePlayPause=()=>{
@@ -54,6 +57,7 @@ export default function RemoteScreen({ navigation }: RemoteScreenProps) {
                                 onLeft={()=>sendKey(SamsungCommands.LEFT)}
                                 onRight={()=>sendKey(SamsungCommands.RIGHT)}
                                 onOk={()=>sendKey(SamsungCommands.OK)}
+                                onOKLongPress={()=>startHold(SamsungCommands.OK,OK_HOLD_MS)}
                         />
                     </View>
                 </View>
@@ -82,6 +86,10 @@ export default function RemoteScreen({ navigation }: RemoteScreenProps) {
                                 centerLabel="VOL"
                                 onTopPress={()=>sendKey(SamsungCommands.VOLUME_UP)}
                                 onBottomPress={()=>sendKey(SamsungCommands.VOLUME_DOWN)}
+                                onTopLongPress={()=>startHold(SamsungCommands.VOLUME_UP,MAX_HOLD_MS)}
+                                onBottomLongPress={()=>startHold(SamsungCommands.VOLUME_DOWN,MAX_HOLD_MS)}
+                                onLongPressEnd={endHold}
+                                delayLongPress={LONG_PRESS_VOLUME_MS}
                     />
 
                     {/* Mute,home,back,pause and color buttons in the midde */}

@@ -113,20 +113,36 @@ export default class SansungWSService{
         this.ws=null;
     }
 
-    sendKey(command:SamsungCommand):void{
-        if(!this.ws || this.ws.readyState !== PinnedWebSocket.OPEN){
-            this.events.onError?.("Cannot send key - not connected to TV");
-            return
-        }
+    private sendRemoteCommand(command:SamsungCommand,cmd:"Click"|"Press"|"Release"):boolean{
+        if(!this.ws || this.ws.readyState !== PinnedWebSocket.OPEN) return false;
 
         this.ws.send(JSON.stringify({
             method:"ms.remote.control",
             params:{
-                Cmd:"Click",
+                Cms:cmd,
                 DataOfCmd:command,
                 Option:"false",
-                TypeOfRemote:"SendRemoteKey",
+                TypeofRemote:"SendRemoteKey",
             },
         }));
+        return true;
+    }
+
+    sendKey(command:SamsungCommand):void{
+        if(!this.sendRemoteCommand(command,"Click")){
+            this.events.onError?.("Cannot send key - not connected to TV");
+        }
+    }
+
+    pressKey(command:SamsungCommand):void{
+        console.log("TEMPORARY TV press",command);
+        if(!this.sendRemoteCommand(command,"Press")){
+            this.events.onError?.("Cannor send key - not connected to TV");
+        }
+    }
+
+    releaseKey(command:SamsungCommand):void{
+        console.log("TEMPORARY TV release",command);
+        this.sendRemoteCommand(command,"Release");
     }
 }
